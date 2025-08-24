@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   images: {
-    domains: ['https://teamup-rroscian.onrender.com'],
+    domains: ['teamup-rroscian.onrender.com', 'images.unsplash.com'],
   },
 };
 
