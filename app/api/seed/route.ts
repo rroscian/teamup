@@ -1,9 +1,8 @@
 // API Route pour initialiser des données d'exemple
-import { NextRequest } from 'next/server';
 import seedData from '@/scripts/seed-data';
 import { ApiResponse } from '@/shared/types';
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Sécurité : ne pas permettre en production
     if (process.env.NODE_ENV === 'production') {

@@ -1,4 +1,4 @@
-import { Event, EventStatus, Sport, SkillLevel, LocationType, EventLocation, ParticipationStatus } from '@/shared/types';
+import { Event, EventStatus, Sport, SkillLevel, LocationType, EventLocation } from '@/shared/types';
 
 // Simulated event data
 const mockEvents: Event[] = [
@@ -250,7 +250,7 @@ export const eventService = {
       id: `${eventId}-${userId}`,
       eventId,
       userId,
-      status: ParticipationStatus.Confirmed,
+      status: 'attending' as const,
       user: {} as any // In real app, would fetch user data
     });
 

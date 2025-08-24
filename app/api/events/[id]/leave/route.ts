@@ -3,13 +3,14 @@ import { eventService } from '@/backend/services/eventService';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Get actual user ID from authentication
     const userId = '1'; // Mock user ID for now
     
-    const event = await eventService.leaveEvent(params.id, userId);
+    const { id } = await params;
+    const event = await eventService.leaveEvent(id, userId);
     
     if (!event) {
       return NextResponse.json(

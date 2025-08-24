@@ -25,7 +25,7 @@ export default function Home() {
                 <span className="whitespace-nowrap">chaque quartier</span> en terrain de jeu.
                 <span className="block mt-3 font-medium text-[#2C3E50]/80">
                   Organisez, participez, rencontrez :{' '}
-                  <span className="whitespace-nowrap">le sport n'a jamais été</span> aussi accessible.
+                  <span className="whitespace-nowrap">le sport n&apos;a jamais été</span> aussi accessible.
                 </span>
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
@@ -62,9 +62,11 @@ export default function Home() {
             {/* Hero Image */}
             <div className="relative">
               <div className="bg-gradient-to-br from-[#00A8CC]/10 to-[#FF6B35]/10 rounded-2xl overflow-hidden h-96">
-                <img 
+                <Image 
                   src="https://images.unsplash.com/photo-1569074187119-c87815b476da?w=600&h=400&fit=crop&crop=center" 
                   alt="Skateur en pleine routine"
+                  width={600}
+                  height={400}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-[#00A8CC]/20 to-[#FF6B35]/20"></div>
@@ -108,7 +110,7 @@ export default function Home() {
             </h2>
             <p className="text-xl text-[#2C3E50]/70 max-w-3xl mx-auto leading-relaxed">
               Découvrez les valeurs qui font de TeamUp{' '}
-              <span className="whitespace-nowrap">bien plus qu'une</span> simple plateforme :
+              <span className="whitespace-nowrap">bien plus qu&apos;une</span> simple plateforme :
               <span className="block mt-3 font-medium text-[#2C3E50]/80">
                 une communauté <span className="whitespace-nowrap">bienveillante et engagée</span>.
               </span>
@@ -123,7 +125,7 @@ export default function Home() {
                 </div>
               </div>
               <h3 className="text-2xl font-bold text-[#2C3E50] mb-4 text-center">
-                L'esprit d'équipe{' '}<span className="whitespace-nowrap">avant tout</span>
+                L&apos;esprit d&apos;équipe{' '}<span className="whitespace-nowrap">avant tout</span>
               </h3>
               <p className="text-[#2C3E50]/70 leading-relaxed text-center">
                 Chaque match, chaque entraînement devient{' '}
@@ -163,7 +165,7 @@ export default function Home() {
               </h3>
               <p className="text-[#2C3E50]/70 leading-relaxed text-center">
                 Une technologie simple,{' '}
-                <span className="whitespace-nowrap">accessible et respectueuse</span> de l'environnement.
+                <span className="whitespace-nowrap">accessible et respectueuse</span> de l&apos;environnement.
                 <span className="block mt-3 font-medium text-[#00D9A3]">
                   Pour que chacun{' '}<span className="whitespace-nowrap">trouve sa place</span>.
                 </span>
@@ -194,7 +196,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#2C3E50] mb-2">Création d'événements en 3 clics</h3>
+                  <h3 className="text-xl font-semibold text-[#2C3E50] mb-2">Création d&apos;événements en 3 clics</h3>
                   <p className="text-[#2C3E50]/70">
                     Organisez vos matchs, sessions et tournois facilement. 
                     Invitez vos amis ou ouvrez à la communauté.
@@ -224,7 +226,7 @@ export default function Home() {
                   </div>
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-[#2C3E50] mb-2">Gestion d'équipes simplifiée</h3>
+                  <h3 className="text-xl font-semibold text-[#2C3E50] mb-2">Gestion d&apos;équipes simplifiée</h3>
                   <p className="text-[#2C3E50]/70">
                     Créez vos équipes, communiquez via la messagerie intégrée 
                     et suivez les disponibilités de chacun.
@@ -251,9 +253,11 @@ export default function Home() {
             <div className="relative">
               <div className="relative w-full max-w-[600px] mx-auto">
                 <div className="bg-gradient-to-br from-[#00A8CC]/10 to-[#FF6B35]/10 rounded-2xl overflow-hidden">
-                  <img 
+                  <Image 
                     src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&h=400&fit=crop&crop=center" 
                     alt="Sportifs en action - Communauté sportive dynamique"
+                    width={600}
+                    height={400}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -377,7 +381,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2">
-                <li><Link href="#" className="hover:text-[#00A8CC] hover:scale-105 transition-all duration-200">Centre d'aide</Link></li>
+                <li><Link href="#" className="hover:text-[#00A8CC] hover:scale-105 transition-all duration-200">Centre d&apos;aide</Link></li>
                 <li><Link href="#" className="hover:text-[#00A8CC] hover:scale-105 transition-all duration-200">Contact</Link></li>
                 <li><Link href="#" className="hover:text-[#00A8CC] hover:scale-105 transition-all duration-200">FAQ</Link></li>
               </ul>

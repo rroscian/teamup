@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/frontend/hooks/useAuth';
-import { UserSportProfile, Sport, SkillLevel, DayOfWeek, TimeSlot } from '@/shared/types';
+import { UserSportProfile, Sport, SkillLevel, DayOfWeek, TimeSlot, DayAvailability } from '@/shared/types';
 import { Button } from './Button';
 import { Card } from './Card';
 
@@ -45,37 +45,41 @@ export function UserProfile({ userId }: UserProfileProps) {
   const toggleAvailability = (day: DayOfWeek, slot: TimeSlot) => {
     if (!editedProfile) return;
 
-    const currentAvailability = editedProfile.availability || [];
-    const dayAvailability = currentAvailability.find(a => a.day === day);
+    const currentWeekdays = editedProfile.availability?.weekdays || [];
+    const dayAvailability = currentWeekdays.find(a => a.day === day);
 
-    let newAvailability;
+    let newWeekdays;
     if (dayAvailability) {
-      const hasSlot = dayAvailability.timeSlots.includes(slot);
+      const currentSlots = dayAvailability.timeSlots || [];
+      const hasSlot = currentSlots.some(s => isSameSlot(s, slot));
       if (hasSlot) {
         // Remove slot
-        const newSlots = dayAvailability.timeSlots.filter(s => s !== slot);
+        const newSlots = currentSlots.filter(s => !isSameSlot(s, slot));
         if (newSlots.length === 0) {
           // Remove day if no slots
-          newAvailability = currentAvailability.filter(a => a.day !== day);
+          newWeekdays = currentWeekdays.filter(a => a.day !== day);
         } else {
-          newAvailability = currentAvailability.map(a =>
-            a.day === day ? { ...a, timeSlots: newSlots } : a
+          newWeekdays = currentWeekdays.map(a =>
+            a.day === day ? { ...a, timeSlots: newSlots, available: true } : a
           );
         }
       } else {
         // Add slot
-        newAvailability = currentAvailability.map(a =>
-          a.day === day ? { ...a, timeSlots: [...a.timeSlots, slot] } : a
+        newWeekdays = currentWeekdays.map(a =>
+          a.day === day ? { ...a, timeSlots: [...currentSlots, slot], available: true } : a
         );
       }
     } else {
       // Add new day with slot
-      newAvailability = [...currentAvailability, { day, timeSlots: [slot] }];
+      newWeekdays = [...currentWeekdays, { day, timeSlots: [slot], available: true }];
     }
 
     setEditedProfile({
       ...editedProfile,
-      availability: newAvailability
+      availability: {
+        weekdays: newWeekdays,
+        preferredTimes: editedProfile.availability?.preferredTimes || []
+      }
     });
   };
 
@@ -102,10 +106,22 @@ export function UserProfile({ userId }: UserProfileProps) {
     [DayOfWeek.Sunday]: 'Dimanche'
   };
 
-  const slotLabels: Record<TimeSlot, string> = {
-    [TimeSlot.Morning]: 'Matin (6h-12h)',
-    [TimeSlot.Afternoon]: 'Après-midi (12h-18h)',
-    [TimeSlot.Evening]: 'Soir (18h-00h)'
+  // Définition des créneaux horaires prédéfinis
+  const predefinedSlots: TimeSlot[] = [
+    { startTime: '06:00', endTime: '12:00' },
+    { startTime: '12:00', endTime: '18:00' },
+    { startTime: '18:00', endTime: '00:00' }
+  ];
+
+  const getSlotLabel = (slot: TimeSlot): string => {
+    if (slot.startTime === '06:00' && slot.endTime === '12:00') return 'Matin (6h-12h)';
+    if (slot.startTime === '12:00' && slot.endTime === '18:00') return 'Après-midi (12h-18h)';
+    if (slot.startTime === '18:00' && slot.endTime === '00:00') return 'Soir (18h-00h)';
+    return `${slot.startTime} - ${slot.endTime}`;
+  };
+
+  const isSameSlot = (a: TimeSlot, b: TimeSlot): boolean => {
+    return a.startTime === b.startTime && a.endTime === b.endTime;
   };
 
   if (loading) {
@@ -220,20 +236,20 @@ export function UserProfile({ userId }: UserProfileProps) {
         <h3 className="text-lg font-semibold mb-4">Disponibilités</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Object.values(DayOfWeek).map(day => {
-            const dayAvailability = (editing ? editedProfile : profile)?.availability?.find(
-              a => a.day === day
+            const dayAvailability = (editing ? editedProfile : profile)?.availability?.weekdays?.find(
+              (a: DayAvailability) => a.day === day
             );
 
             return (
               <div key={day} className="border rounded-lg p-3">
                 <h4 className="font-medium mb-2">{dayLabels[day]}</h4>
                 <div className="space-y-1">
-                  {Object.values(TimeSlot).map(slot => {
-                    const isAvailable = dayAvailability?.timeSlots.includes(slot) || false;
+                  {predefinedSlots.map((slot, index) => {
+                    const isAvailable = dayAvailability?.timeSlots?.some(s => isSameSlot(s, slot)) || false;
 
                     return editing ? (
                       <label
-                        key={slot}
+                        key={index}
                         className="flex items-center gap-2 cursor-pointer"
                       >
                         <input
@@ -242,12 +258,12 @@ export function UserProfile({ userId }: UserProfileProps) {
                           onChange={() => toggleAvailability(day, slot)}
                           className="rounded"
                         />
-                        <span className="text-sm">{slotLabels[slot]}</span>
+                        <span className="text-sm">{getSlotLabel(slot)}</span>
                       </label>
                     ) : (
                       isAvailable && (
-                        <div key={slot} className="text-sm text-gray-600">
-                          ✓ {slotLabels[slot]}
+                        <div key={index} className="text-sm text-gray-600">
+                          ✓ {getSlotLabel(slot)}
                         </div>
                       )
                     );

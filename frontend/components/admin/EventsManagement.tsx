@@ -9,9 +9,8 @@ import {
   FunnelIcon,
   MagnifyingGlassIcon
 } from '@heroicons/react/24/outline';
-import { useEvents } from '@/frontend/contexts/EventsContext';
-import EventForm from '@/frontend/components/events/EventForm';
-import { Event } from '@/shared/types/Event';
+import { useEvents, Event } from '@/frontend/contexts/EventsContext';
+import { EventForm } from '@/frontend/components/events/EventForm';
 
 const EventsManagement: React.FC = () => {
   const { events, deleteEvent, loading, error } = useEvents();
@@ -221,7 +220,7 @@ const EventsManagement: React.FC = () => {
                     {event.location}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(event.date)}`}>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(event.date.toString())}`}>
                       {new Date(event.date) > new Date() ? 'À venir' : 'Passé'}
                     </span>
                   </td>
@@ -282,9 +281,9 @@ const EventsManagement: React.FC = () => {
                 </button>
               </div>
               <EventForm
-                event={selectedEvent}
-                onSuccess={closeModal}
-                mode={modalMode}
+                event={selectedEvent || undefined}
+                isOpen={showModal}
+                onClose={closeModal}
               />
             </div>
           </div>

@@ -3,10 +3,11 @@ import { eventService } from '@/backend/services/eventService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const event = await eventService.getEventById(params.id);
+    const { id } = await params;
+    const event = await eventService.getEventById(id);
     
     if (!event) {
       return NextResponse.json(
@@ -27,16 +28,17 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     
     // Convert date strings to Date objects if present
     if (body.startDate) body.startDate = new Date(body.startDate);
     if (body.endDate) body.endDate = new Date(body.endDate);
     
-    const updatedEvent = await eventService.updateEvent(params.id, body);
+    const updatedEvent = await eventService.updateEvent(id, body);
     
     if (!updatedEvent) {
       return NextResponse.json(
@@ -57,10 +59,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const success = await eventService.deleteEvent(params.id);
+    const { id } = await params;
+    const success = await eventService.deleteEvent(id);
     
     if (!success) {
       return NextResponse.json(

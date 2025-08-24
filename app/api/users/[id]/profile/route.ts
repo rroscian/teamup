@@ -4,10 +4,11 @@ import { UserSportProfile } from '@/shared/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await UserService.findById(params.id);
+    const { id } = await params;
+    const user = await UserService.findById(id);
     
     if (!user) {
       return NextResponse.json(
@@ -30,12 +31,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const profileData: Partial<UserSportProfile> = await request.json();
 
-    const updatedUser = await UserService.updateProfile(params.id, profileData);
+    const updatedUser = await UserService.updateProfile(id, profileData);
     
     if (!updatedUser) {
       return NextResponse.json(

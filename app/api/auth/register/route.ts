@@ -16,20 +16,19 @@ export async function POST(request: NextRequest) {
 
     // Register the user
     const newUser = await UserService.register(registrationData);
-
-    // Remove sensitive data before sending response
-    const { password, ...userWithoutPassword } = registrationData;
     
     return NextResponse.json({
       user: newUser,
       message: 'Registration successful'
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error);
     
-    if (error.message === 'User with this email already exists') {
+    const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+    
+    if (errorMessage === 'User with this email already exists') {
       return NextResponse.json(
-        { error: error.message },
+        { error: errorMessage },
         { status: 409 } // Conflict
       );
     }

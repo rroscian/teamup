@@ -112,6 +112,16 @@ export interface Event {
   equipment?: string[];
 }
 
+export interface EventFilters {
+  sport?: Sport;
+  city?: string;
+  level?: SkillLevel;
+  status?: EventStatus;
+  maxPrice?: number;
+  startDate?: Date;
+  endDate?: Date;
+}
+
 export interface EventLocation {
   name: string;
   address: string;
