@@ -108,7 +108,38 @@ export class TeamService {
       teamId,
       role: 'member',
       joinedAt: new Date(),
-      user,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.username, // Map username to name for type compatibility
+        avatar: user.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+        profile: user.profile ? {
+          favoriteSports: user.profile.sports as import('../../shared/types').Sport[],
+          skillLevels: user.profile.skillLevel ? [{
+            sport: user.profile.sports[0] as import('../../shared/types').Sport || 'football',
+            level: user.profile.skillLevel as import('../../shared/types').SkillLevel
+          }] : [],
+          availability: {
+            weekdays: [],
+            preferredTimes: user.profile.availability.map((avail: string) => {
+              const [startTime, endTime] = avail.split('-');
+              return { startTime, endTime };
+            })
+          },
+          bio: user.profile.bio || undefined,
+          location: user.profile.location ? {
+            city: typeof user.profile.location === 'string' ? user.profile.location : (user.profile.location as { city: string; postalCode?: string }).city,
+            postalCode: typeof user.profile.location === 'object' ? (user.profile.location as { city: string; postalCode?: string }).postalCode : undefined
+          } : undefined,
+          notifications: {
+            events: true,
+            messages: true,
+            reminders: true
+          }
+        } : undefined,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      },
     };
 
     this.members.push(newMember);
@@ -166,7 +197,38 @@ export class TeamService {
     for (const member of teamMembers) {
       const user = await UserService.findById(member.userId);
       if (user) {
-        member.user = user;
+        member.user = {
+          id: user.id,
+          email: user.email,
+          name: user.username, // Map username to name for type compatibility
+          avatar: user.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+          profile: user.profile ? {
+            favoriteSports: user.profile.sports as import('../../shared/types').Sport[],
+            skillLevels: user.profile.skillLevel ? [{
+              sport: user.profile.sports[0] as import('../../shared/types').Sport || 'football',
+              level: user.profile.skillLevel as import('../../shared/types').SkillLevel
+            }] : [],
+            availability: {
+              weekdays: [],
+              preferredTimes: user.profile.availability.map((avail: string) => {
+                const [startTime, endTime] = avail.split('-');
+                return { startTime, endTime };
+              })
+            },
+            bio: user.profile.bio || undefined,
+            location: user.profile.location ? {
+              city: typeof user.profile.location === 'string' ? user.profile.location : (user.profile.location as { city: string; postalCode?: string }).city,
+              postalCode: typeof user.profile.location === 'object' ? (user.profile.location as { city: string; postalCode?: string }).postalCode : undefined
+            } : undefined,
+            notifications: {
+              events: true,
+              messages: true,
+              reminders: true
+            }
+          } : undefined,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        };
       }
     }
     

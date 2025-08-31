@@ -227,7 +227,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                 id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                   errors.title ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Nom de votre événement"
@@ -245,7 +245,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                 rows={3}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 placeholder="Décrivez votre événement..."
               />
             </div>
@@ -260,7 +260,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   id="category"
                   value={formData.category}
                   onChange={(e) => handleCategoryChange(e.target.value as EventCategory)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   <option value="sports">Sports</option>
                   <option value="social">Social</option>
@@ -276,7 +276,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   id="type"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as EventType })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 >
                   {typesByCategory[formData.category as keyof typeof typesByCategory]?.map((type: string) => (
                     <option key={type} value={type}>
@@ -299,7 +299,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   id="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.date ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -316,7 +316,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   id="time"
                   value={formData.time}
                   onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.time ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
@@ -335,7 +335,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                 id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                   errors.location ? 'border-red-500' : 'border-gray-300'
                 }`}
                 placeholder="Adresse ou nom du lieu"
@@ -355,7 +355,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   min="1"
                   value={formData.maxParticipants}
                   onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.maxParticipants ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Illimité"
@@ -374,7 +374,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.price ? 'border-red-500' : 'border-gray-300'
                   }`}
                   placeholder="Gratuit"
@@ -395,7 +395,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                     value={formData.newTag}
                     onChange={(e) => setFormData({ ...formData, newTag: e.target.value })}
                     onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Ajouter un tag..."
                   />
                   <button

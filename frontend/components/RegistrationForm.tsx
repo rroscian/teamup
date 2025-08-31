@@ -93,11 +93,11 @@ export function RegistrationForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <Card className="p-8">
+    <div className="max-w-lg mx-auto p-6">
+      <Card className="p-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center mb-6">
             <Image 
               src="/teamup_logo.png" 
               alt="TeamUp Logo" 
@@ -106,31 +106,31 @@ export function RegistrationForm() {
               className="w-12 h-12"
             />
           </div>
-          <h2 className="text-2xl font-bold mb-2" style={{color: '#2C3E50'}}>
+          <h2 className="text-3xl font-bold mb-4" style={{color: '#2C3E50'}}>
             Rejoignez TeamUp
           </h2>
-          <p style={{color: '#2C3E50', opacity: 0.7}}>
+          <p className="text-lg" style={{color: '#2C3E50', opacity: 0.7}}>
             Créez votre profil pour organiser des événements sportifs
           </p>
         </div>
 
         {/* Progress indicator */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-12">
           <div className="flex items-center space-x-4">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              step >= 1 ? 'bg-primary text-white' : 'bg-gray-200'
+              step >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-white'
             }`}>
               1
             </div>
-            <div className={`w-20 h-1 ${step >= 2 ? 'bg-primary' : 'bg-gray-200'}`} />
+            <div className={`w-20 h-1 ${step >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              step >= 2 ? 'bg-primary text-white' : 'bg-gray-200'
+              step >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-white'
             }`}>
               2
             </div>
-            <div className={`w-20 h-1 ${step >= 3 ? 'bg-primary' : 'bg-gray-200'}`} />
+            <div className={`w-20 h-1 ${step >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`} />
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              step >= 3 ? 'bg-primary text-white' : 'bg-gray-200'
+              step >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-white'
             }`}>
               3
             </div>
@@ -138,9 +138,9 @@ export function RegistrationForm() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div className="mb-8 p-5 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             <div className="flex items-center">
-              <span className="text-red-500 mr-2">⚠️</span>
+              <span className="text-red-500 mr-3">⚠️</span>
               {error}
             </div>
           </div>
@@ -149,11 +149,11 @@ export function RegistrationForm() {
         <form onSubmit={handleSubmit}>
           {/* Step 1: Basic Information */}
           {step === 1 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4" style={{color: '#2C3E50'}}>Informations de base</h3>
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold mb-6" style={{color: '#2C3E50'}}>Informations de base</h3>
               
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
+                <label htmlFor="fullName" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
                   Nom complet
                 </label>
                 <Input
@@ -166,7 +166,7 @@ export function RegistrationForm() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
+                <label htmlFor="email" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
                   Email
                 </label>
                 <Input
@@ -179,7 +179,7 @@ export function RegistrationForm() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
+                <label htmlFor="password" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
                   Mot de passe
                 </label>
                 <Input
@@ -192,69 +192,73 @@ export function RegistrationForm() {
                 />
               </div>
 
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
-                  Ville
-                </label>
-                <Input
-                  type="text"
-                  value={formData.profile?.location?.city || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    profile: {
-                      ...formData.profile!,
-                      location: {
-                        ...formData.profile!.location!,
-                        city: e.target.value
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="city" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
+                    Ville
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.profile?.location?.city || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      profile: {
+                        ...formData.profile!,
+                        location: {
+                          ...formData.profile!.location!,
+                          city: e.target.value
+                        }
                       }
-                    }
-                  })}
-                  placeholder="Paris"
-                />
-              </div>
+                    })}
+                    placeholder="Paris"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
-                  Code postal
-                </label>
-                <Input
-                  type="text"
-                  value={formData.profile?.location?.postalCode || ''}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    profile: {
-                      ...formData.profile!,
-                      location: {
-                        ...formData.profile!.location!,
-                        postalCode: e.target.value
+                <div>
+                  <label htmlFor="postalCode" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
+                    Code postal
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.profile?.location?.postalCode || ''}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      profile: {
+                        ...formData.profile!,
+                        location: {
+                          ...formData.profile!.location!,
+                          postalCode: e.target.value
+                        }
                       }
-                    }
-                  })}
-                  placeholder="75001"
-                  pattern="[0-9]{5}"
-                />
+                    })}
+                    placeholder="75001"
+                    pattern="[0-9]{5}"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* Step 2: Sports Preferences */}
           {step === 2 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4" style={{color: '#2C3E50'}}>Vos sports préférés</h3>
-              <p className="text-sm mb-4" style={{color: '#2C3E50', opacity: 0.7}}>
-                Choisissez vos sports préférés et indiquez votre niveau
-              </p>
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-4" style={{color: '#2C3E50'}}>Vos sports préférés</h3>
+                <p className="text-base mb-6" style={{color: '#2C3E50', opacity: 0.7}}>
+                  Choisissez vos sports préférés et indiquez votre niveau
+                </p>
+              </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {sportOptions.map(({ value, label }) => (
                   <button
                     key={value}
                     type="button"
                     onClick={() => toggleSport(value)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
+                    className={`p-4 rounded-lg border-2 transition-all font-medium ${
                       formData.profile?.favoriteSports?.includes(value)
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-[#00A8CC] bg-[#00A8CC]/10 text-[#00A8CC]'
+                        : 'border-gray-300 hover:border-[#00A8CC] hover:bg-gray-50 text-gray-700'
                     }`}
                   >
                     {label}
@@ -263,32 +267,34 @@ export function RegistrationForm() {
               </div>
 
               {formData.profile?.favoriteSports && formData.profile.favoriteSports.length > 0 && (
-                <div className="mt-6 space-y-3">
-                  <h4 className="font-medium" style={{color: '#2C3E50'}}>Votre niveau pour chaque sport:</h4>
+                <div className="mt-8 space-y-4">
+                  <h4 className="text-lg font-semibold" style={{color: '#2C3E50'}}>Votre niveau pour chaque sport:</h4>
                   {formData.profile.favoriteSports.map(sport => {
                     const sportLabel = sportOptions.find(s => s.value === sport)?.label || sport;
                     const currentLevel = formData.profile?.skillLevels?.find(sl => sl.sport === sport)?.level;
                     
                     return (
-                      <div key={sport} className="flex items-center justify-between">
-                        <span className="text-sm">{sportLabel}</span>
-                        <div className="flex gap-2">
-                          {Object.values(SkillLevel).map(level => (
-                            <button
-                              key={level}
-                              type="button"
-                              onClick={() => updateSkillLevel(sport, level)}
-                              className={`px-3 py-1 text-sm rounded ${
-                                currentLevel === level
-                                  ? 'bg-primary text-white'
-                                  : 'bg-gray-100 hover:bg-gray-200'
-                              }`}
-                            >
-                              {level === SkillLevel.Beginner ? 'Débutant' :
-                               level === SkillLevel.Intermediate ? 'Intermédiaire' :
-                               level === SkillLevel.Advanced ? 'Avancé' : 'Mixte'}
-                            </button>
-                          ))}
+                      <div key={sport} className="p-4 bg-gray-50 rounded-lg">
+                        <div className="flex flex-col space-y-3">
+                          <span className="text-base font-semibold text-gray-900">{sportLabel}</span>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.values(SkillLevel).map(level => (
+                              <button
+                                key={level}
+                                type="button"
+                                onClick={() => updateSkillLevel(sport, level)}
+                                className={`px-3 py-2 text-sm font-bold rounded-lg transition-all border-2 ${
+                                  currentLevel === level
+                                    ? 'bg-[#00A8CC] text-white border-[#00A8CC] shadow-md'
+                                    : 'bg-white text-gray-900 border-gray-400 hover:bg-[#00A8CC] hover:border-[#00A8CC]'
+                                }`}
+                              >
+                                {level === SkillLevel.Beginner ? 'Débutant' :
+                                 level === SkillLevel.Intermediate ? 'Intermédiaire' :
+                                 level === SkillLevel.Advanced ? 'Avancé' : 'Mixte'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     );
@@ -300,11 +306,11 @@ export function RegistrationForm() {
 
           {/* Step 3: Bio */}
           {step === 3 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold mb-4" style={{color: '#2C3E50'}}>Présentez-vous</h3>
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold mb-6" style={{color: '#2C3E50'}}>Présentez-vous</h3>
               
               <div>
-                <label htmlFor="bio" className="block text-sm font-medium mb-2" style={{color: '#2C3E50'}}>
+                <label htmlFor="bio" className="block text-base font-medium mb-3" style={{color: '#2C3E50'}}>
                   Bio (optionnel)
                 </label>
                 <textarea
@@ -316,7 +322,7 @@ export function RegistrationForm() {
                       bio: e.target.value
                     }
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base font-semibold text-gray-900 bg-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#00A8CC] focus:border-[#00A8CC] transition-colors resize-none"
                   rows={4}
                   placeholder="Parlez-nous de vous, de votre expérience sportive, de vos objectifs..."
                 />
@@ -325,13 +331,13 @@ export function RegistrationForm() {
           )}
 
           {/* Navigation buttons */}
-          <div className="flex justify-between mt-8">
+          <div className="flex justify-between items-center mt-12 gap-4">
             {step > 1 && (
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setStep(step - 1)}
-                className="text-[#00A8CC] hover:text-[#0092b3] hover:scale-105 transition-all duration-200 font-medium"
+                className="px-6 py-3 border-2 border-[#00A8CC] text-[#00A8CC] bg-white hover:bg-[#00A8CC] hover:shadow-lg transition-all duration-200 font-semibold text-base rounded-lg"
               >
                 Précédent
               </Button>
@@ -339,7 +345,7 @@ export function RegistrationForm() {
             
             <Button
               type="submit"
-              className={`w-full bg-[#00A8CC] hover:bg-[#0092b3] text-white py-3 rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-300 font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center`}
+              className={`${step > 1 ? 'flex-1' : 'w-full'} bg-[#00A8CC] hover:bg-[#007A99] text-white py-4 rounded-lg hover:shadow-xl transition-all duration-300 font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center border-2 border-[#00A8CC]`}
               disabled={loading}
             >
               {loading ? (
@@ -355,25 +361,25 @@ export function RegistrationForm() {
         </form>
 
         {/* Divider */}
-        <div className="relative my-8">
+        <div className="relative my-10">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-200"></div>
+            <div className="w-full border-t border-gray-300"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-2 bg-white" style={{color: '#2C3E50', opacity: 0.6}}>ou</span>
+          <div className="relative flex justify-center text-base">
+            <span className="px-4 bg-white font-medium" style={{color: '#2C3E50', opacity: 0.6}}>ou</span>
           </div>
         </div>
 
         {/* Login Link */}
         <div className="text-center">
-          <p className="mb-4" style={{color: '#2C3E50', opacity: 0.7}}>
+          <p className="mb-6 text-base" style={{color: '#2C3E50', opacity: 0.7}}>
             Déjà un compte ?
           </p>
           <Link href="/login">
             <Button
               type="button"
               variant="outline"
-              className="w-full border-[#00A8CC] text-[#00A8CC] hover:bg-[#00A8CC] hover:text-white"
+              className="w-full py-4 border-2 border-[#00A8CC] text-[#00A8CC] bg-white hover:bg-[#00A8CC] hover:shadow-lg transition-all duration-200 font-semibold text-lg rounded-lg"
             >
               Se connecter
             </Button>

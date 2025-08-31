@@ -1,124 +1,178 @@
 // Service de gestion des utilisateurs
+import { User as PrismaUser, UserProfile } from '@prisma/client';
 import { User, CreateUserForm, UpdateProfileForm, UserRegistration, UserSportProfile } from '@/shared/types';
+import { prisma } from '@/lib/prisma';
+import { AuthService } from '@/lib/auth';
 
 export class UserService {
-  // Simule une base de données en mémoire pour la démo
-  private static users: User[] = [];
-
-  static async findById(id: string): Promise<User | null> {
-    return this.users.find(user => user.id === id) || null;
+  static async findById(id: string): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    return prisma.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    });
   }
 
-  static async findByEmail(email: string): Promise<User | null> {
-    return this.users.find(user => user.email === email) || null;
+  static async findByEmail(email: string): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    return prisma.user.findUnique({
+      where: { email },
+      include: { profile: true }
+    });
   }
 
-  static async findAll(): Promise<User[]> {
-    return [...this.users];
+  static async findAll(): Promise<(PrismaUser & { profile: UserProfile | null })[]> {
+    return prisma.user.findMany({
+      include: { profile: true }
+    });
   }
 
-  static async create(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
-    const newUser: User = {
-      ...userData,
-      id: String(Date.now()), // Use timestamp for unique ID
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.users.push(newUser);
-    return newUser;
+  static async create(userData: CreateUserForm & { password?: string }): Promise<PrismaUser & { profile: UserProfile | null }> {
+    const hashedPassword = await AuthService.hashPassword(userData.password || '');
+    
+    return prisma.user.create({
+      data: {
+        email: userData.email,
+        username: userData.name,
+        password: hashedPassword,
+        profile: {
+          create: {
+            firstName: userData.name.split(' ')[0],
+            lastName: userData.name.split(' ').slice(1).join(' '),
+            avatar: userData.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email}`,
+            bio: '',
+            location: {},
+            sports: [],
+            skillLevel: null,
+            availability: []
+          }
+        }
+      },
+      include: { profile: true }
+    });
   }
 
-  static async register(registrationData: UserRegistration): Promise<User> {
+  static async register(registrationData: UserRegistration): Promise<PrismaUser & { profile: UserProfile | null }> {
     // Check if user already exists
     const existingUser = await this.findByEmail(registrationData.email);
     if (existingUser) {
       throw new Error('User with this email already exists');
     }
 
+    // Check if username already exists
+    const existingUsername = await prisma.user.findUnique({
+      where: { username: registrationData.name }
+    });
+    if (existingUsername) {
+      throw new Error('Username already taken');
+    }
+
+    // Hash the password
+    const hashedPassword = await AuthService.hashPassword(registrationData.password);
+
     // Create user with profile
-    const newUser: User = {
-      id: String(Date.now()),
-      email: registrationData.email,
-      name: registrationData.name,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${registrationData.email}`,
-      profile: registrationData.profile ? {
-        favoriteSports: registrationData.profile.favoriteSports || [],
-        skillLevels: registrationData.profile.skillLevels || [],
-        availability: {
-          weekdays: [],
-          preferredTimes: []
-        },
-        bio: registrationData.profile.bio,
-        location: registrationData.profile.location,
-        notifications: {
-          events: true,
-          messages: true,
-          reminders: true
+    return prisma.user.create({
+      data: {
+        email: registrationData.email,
+        username: registrationData.name,
+        password: hashedPassword,
+        profile: registrationData.profile ? {
+          create: {
+            firstName: registrationData.name.split(' ')[0],
+            lastName: registrationData.name.split(' ').slice(1).join(' '),
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${registrationData.email}`,
+            bio: registrationData.profile.bio,
+            location: registrationData.profile.location as any,
+            sports: registrationData.profile.favoriteSports || [],
+            skillLevel: registrationData.profile.skillLevels?.[0]?.level,
+            availability: registrationData.profile.availability?.preferredTimes.map(ts => `${ts.startTime}-${ts.endTime}`) || []
+          }
+        } : {
+          create: {
+            avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${registrationData.email}`,
+            sports: [],
+            availability: []
+          }
         }
-      } : undefined,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
-    this.users.push(newUser);
-    return newUser;
-  }
-
-  static async updateProfile(id: string, profileData: Partial<UserSportProfile>): Promise<User | null> {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    
-    if (userIndex === -1) {
-      return null;
-    }
-
-    // Merge profile data
-    const currentProfile = this.users[userIndex].profile || {
-      favoriteSports: [],
-      skillLevels: [],
-      availability: {
-        weekdays: [],
-        preferredTimes: []
-      }
-    };
-
-    this.users[userIndex] = {
-      ...this.users[userIndex],
-      profile: {
-        ...currentProfile,
-        ...profileData
       },
-      updatedAt: new Date(),
-    };
-
-    return this.users[userIndex];
+      include: { profile: true }
+    });
   }
 
-  static async update(id: string, userData: Partial<UpdateProfileForm>): Promise<User | null> {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    
-    if (userIndex === -1) {
+  static async updateProfile(id: string, profileData: Partial<UserSportProfile>): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    const user = await this.findById(id);
+    if (!user) {
       return null;
     }
 
-    this.users[userIndex] = {
-      ...this.users[userIndex],
-      ...userData,
-      updatedAt: new Date(),
-    };
+    // Update or create profile
+    return prisma.user.update({
+      where: { id },
+      data: {
+        profile: {
+          upsert: {
+            create: {
+              bio: profileData.bio,
+              location: profileData.location as any,
+              sports: profileData.favoriteSports || [],
+              skillLevel: profileData.skillLevels?.[0]?.level,
+              availability: profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || []
+            },
+            update: {
+              bio: profileData.bio,
+              location: profileData.location as any,
+              sports: profileData.favoriteSports || [],
+              skillLevel: profileData.skillLevels?.[0]?.level,
+              availability: profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || []
+            }
+          }
+        }
+      },
+      include: { profile: true }
+    });
+  }
 
-    return this.users[userIndex];
+  static async update(id: string, userData: Partial<UpdateProfileForm>): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        username: userData.name,
+        profile: {
+          update: {
+            firstName: userData.name?.split(' ')[0],
+            lastName: userData.name?.split(' ').slice(1).join(' '),
+            avatar: userData.avatar
+          }
+        }
+      },
+      include: { profile: true }
+    });
   }
 
   static async delete(id: string): Promise<boolean> {
-    const userIndex = this.users.findIndex(user => user.id === id);
-    
-    if (userIndex === -1) {
+    try {
+      await prisma.user.delete({
+        where: { id }
+      });
+      return true;
+    } catch {
       return false;
     }
+  }
 
-    this.users.splice(userIndex, 1);
-    return true;
+  /**
+   * Authenticate user with email and password
+   */
+  static async authenticate(email: string, password: string): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      return null;
+    }
+
+    const isPasswordValid = await AuthService.verifyPassword(password, user.password);
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    return user;
   }
 }
 

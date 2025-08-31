@@ -2,6 +2,109 @@
 import { NextRequest } from 'next/server';
 import { VALIDATION } from '@/shared/constants';
 import { ApiError } from '@/shared/types';
+import { z } from 'zod';
+import { Sport, SkillLevel } from '@/shared/types';
+
+// Authentication schemas
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(6, 'Password must be at least 6 characters')
+});
+
+export const registerSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces'),
+  profile: z.object({
+    favoriteSports: z.array(z.nativeEnum(Sport)).optional(),
+    skillLevels: z.array(z.object({
+      sport: z.nativeEnum(Sport),
+      level: z.nativeEnum(SkillLevel)
+    })).optional(),
+    bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
+    location: z.object({
+      city: z.string().min(2, 'City must be at least 2 characters'),
+      postalCode: z.string().regex(/^\d{5}$/, 'Postal code must be 5 digits').optional()
+    }).optional(),
+    availability: z.object({
+      weekdays: z.array(z.object({
+        day: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
+        available: z.boolean(),
+        timeSlots: z.array(z.object({
+          startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+          endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format')
+        })).optional()
+      })),
+      preferredTimes: z.array(z.object({
+        startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+        endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format')
+      }))
+    }).optional()
+  }).optional()
+});
+
+// Profile update schema
+export const updateProfileSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name must be less than 50 characters')
+    .regex(/^[a-zA-Z\s]+$/, 'Name can only contain letters and spaces')
+    .optional(),
+  email: z.string().email('Invalid email format').optional(),
+  avatar: z.string().url('Invalid URL format').optional(),
+  profile: z.object({
+    favoriteSports: z.array(z.nativeEnum(Sport)).optional(),
+    skillLevels: z.array(z.object({
+      sport: z.nativeEnum(Sport),
+      level: z.nativeEnum(SkillLevel)
+    })).optional(),
+    bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
+    location: z.object({
+      city: z.string().min(2, 'City must be at least 2 characters'),
+      postalCode: z.string().regex(/^\d{5}$/, 'Postal code must be 5 digits').optional()
+    }).optional(),
+    availability: z.object({
+      weekdays: z.array(z.object({
+        day: z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']),
+        available: z.boolean(),
+        timeSlots: z.array(z.object({
+          startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+          endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format')
+        })).optional()
+      })),
+      preferredTimes: z.array(z.object({
+        startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format'),
+        endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Invalid time format')
+      }))
+    }).optional(),
+    notifications: z.object({
+      events: z.boolean(),
+      messages: z.boolean(),
+      reminders: z.boolean()
+    }).optional()
+  }).optional()
+});
+
+// Validation helper function
+export const validateData = <T>(schema: z.ZodSchema<T>, data: unknown): { data?: T; error?: string } => {
+  try {
+    const validatedData = schema.parse(data);
+    return { data: validatedData };
+  } catch (err: unknown) {
+    if (err instanceof z.ZodError) {
+      const errorMessages = err.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`).join(', ');
+      return { error: errorMessages };
+    }
+    return { error: 'Validation failed' };
+  }
+};
 
 export interface ValidationRule {
   field: string;

@@ -69,6 +69,10 @@ export interface UserRegistration {
       city: string;
       postalCode?: string;
     };
+    availability?: {
+      weekdays: DayAvailability[];
+      preferredTimes: TimeSlot[];
+    };
   };
 }
 

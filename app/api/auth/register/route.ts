@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserService } from '@/backend/services/userService';
 import { UserRegistration } from '@/shared/types';
+import { registerSchema, validateData } from '@/backend/middleware/validation';
 
 export async function POST(request: NextRequest) {
   try {
-    const registrationData: UserRegistration = await request.json();
-
-    // Validate required fields
-    if (!registrationData.email || !registrationData.password || !registrationData.name) {
+    const body = await request.json();
+    
+    // Validate input data
+    const validation = validateData(registerSchema, body);
+    if (validation.error) {
       return NextResponse.json(
-        { error: 'Email, password, and name are required' },
+        { error: validation.error },
         { status: 400 }
       );
     }
-
-    // Register the user
-    const newUser = await UserService.register(registrationData);
+    
+    // Create user (cast validated data to UserRegistration type)
+    const user = await UserService.register(validation.data as UserRegistration);
     
     return NextResponse.json({
-      user: newUser,
+      user: user,
       message: 'Registration successful'
     });
   } catch (error) {
