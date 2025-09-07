@@ -37,6 +37,12 @@ export function RegistrationForm() {
     { value: Sport.Swimming, label: '🏊 Natation' },
     { value: Sport.Badminton, label: '🏸 Badminton' },
     { value: Sport.TableTennis, label: '🏓 Tennis de table' },
+    { value: Sport.Gymnastics, label: '🤸 Gymnastique' },
+    { value: Sport.Hiking, label: '🥾 Randonnée' },
+    { value: Sport.Jogging, label: '🏃‍♀️ Jogging' },
+    { value: Sport.Dance, label: '💃 Danse' },
+    { value: Sport.Rugby, label: '🏈 Rugby' },
+    { value: Sport.Handball, label: '🤾 Handball' },
     { value: Sport.Other, label: '🏃 Autre' }
   ];
 
@@ -48,7 +54,7 @@ export function RegistrationForm() {
     }
 
     try {
-      await register(formData);
+      await register(formData.email, formData.password, formData.name);
       // Redirect to profile or events page
       window.location.href = '/events';
     } catch (err) {

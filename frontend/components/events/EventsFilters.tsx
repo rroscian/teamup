@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useEvents } from '@/frontend/contexts/EventsContext';
+import { Sport, SkillLevel } from '@/shared/types';
 import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 
 export function EventsFilters() {
@@ -9,28 +10,25 @@ export function EventsFilters() {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Extraire les valeurs uniques pour les filtres
-  const uniqueCategories = Array.from(new Set(events.map(e => e.category))).filter(Boolean);
-  const uniqueTypes = Array.from(new Set(events.map(e => e.type))).filter(Boolean);
-  const uniqueTags = Array.from(new Set(events.flatMap(e => e.tags))).filter(Boolean);
-  const uniqueLocations = Array.from(new Set(events.map(e => e.location))).filter(Boolean);
+  const uniqueLocations = Array.from(new Set(events.map(e => e.location.city))).filter(Boolean);
+  const uniqueSports = Array.from(new Set(events.map(e => e.sport))).filter(Boolean);
+  const uniqueLevels = Array.from(new Set(events.map(e => e.level))).filter(Boolean);
 
-  const handleCategoryChange = (category: string) => {
-    setFilters({ category: filters.category === category ? '' : category });
-  };
-
-  const handleTypeChange = (type: string) => {
-    setFilters({ type: filters.type === type ? '' : type });
+  const handleLevelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilters({ level: e.target.value as SkillLevel || undefined });
   };
 
   const handleLocationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilters({ location: e.target.value });
   };
 
-  const handleTagToggle = (tag: string) => {
-    const newTags = filters.tags.includes(tag)
-      ? filters.tags.filter(t => t !== tag)
-      : [...filters.tags, tag];
-    setFilters({ tags: newTags });
+  const handleSportChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilters({ sport: e.target.value as Sport || undefined });
+  };
+
+  const handlePriceRangeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const maxPrice = e.target.value ? parseFloat(e.target.value) : undefined;
+    setFilters({ maxPrice });
   };
 
   const handleDateRangeChange = (field: 'start' | 'end', value: string) => {
@@ -44,10 +42,10 @@ export function EventsFilters() {
   };
 
   const hasActiveFilters = 
-    filters.category || 
-    filters.type || 
     filters.location || 
-    filters.tags.length > 0 || 
+    filters.sport ||
+    filters.level ||
+    filters.maxPrice !== undefined ||
     filters.dateRange.start || 
     filters.dateRange.end;
 
@@ -85,49 +83,67 @@ export function EventsFilters() {
       {/* Contenu des filtres */}
       <div className={`${isCollapsed ? 'hidden lg:block' : 'block'}`}>
         <div className="p-4 space-y-6">
-          {/* Filtre par catégorie */}
-          {uniqueCategories.length > 0 && (
+          {/* Filtre par sport */}
+          {uniqueSports.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Catégorie</h4>
-              <div className="space-y-2">
-                {uniqueCategories.map((category) => (
-                  <label key={category} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.category === category}
-                      onChange={() => handleCategoryChange(category)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 capitalize">
-                      {category}
-                    </span>
-                  </label>
+              <h4 className="font-medium text-gray-900 mb-3">Sport</h4>
+              <select
+                value={filters.sport || ''}
+                onChange={handleSportChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  filters.sport 
+                    ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                    : 'border-gray-300 text-gray-800'
+                }`}
+              >
+                <option value="">Tous les sports</option>
+                {Object.values(Sport).map((sport) => (
+                  <option key={sport} value={sport}>
+                    {sport.charAt(0).toUpperCase() + sport.slice(1).replace('_', ' ')}
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
           )}
 
-          {/* Filtre par type */}
-          {uniqueTypes.length > 0 && (
+          {/* Filtre par niveau */}
+          {uniqueLevels.length > 0 && (
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Type</h4>
-              <div className="space-y-2">
-                {uniqueTypes.map((type) => (
-                  <label key={type} className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={filters.type === type}
-                      onChange={() => handleTypeChange(type)}
-                      className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700 capitalize">
-                      {type}
-                    </span>
-                  </label>
-                ))}
-              </div>
+              <h4 className="font-medium text-gray-900 mb-3">Niveau</h4>
+              <select
+                value={filters.level || ''}
+                onChange={handleLevelChange}
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  filters.level 
+                    ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                    : 'border-gray-300 text-gray-800'
+                }`}
+              >
+                <option value="">Tous les niveaux</option>
+                <option value="beginner">Débutant</option>
+                <option value="intermediate">Intermédiaire</option>
+                <option value="advanced">Avancé</option>
+                <option value="mixed">Mixte</option>
+              </select>
             </div>
           )}
+
+          {/* Filtre par prix */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Prix maximum</h4>
+            <input
+              type="number"
+              min="0"
+              placeholder="Prix max (€)"
+              value={filters.maxPrice || ''}
+              onChange={handlePriceRangeChange}
+              className={`w-full border rounded-lg px-3 py-2 text-sm placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                filters.maxPrice !== undefined 
+                  ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                  : 'border-gray-300 text-gray-800'
+              }`}
+            />
+          </div>
 
           {/* Filtre par localisation */}
           {uniqueLocations.length > 0 && (
@@ -136,9 +152,13 @@ export function EventsFilters() {
               <select
                 value={filters.location}
                 onChange={handleLocationChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  filters.location 
+                    ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                    : 'border-gray-300 text-gray-800'
+                }`}
               >
-                <option value="">Toutes les locations</option>
+                <option value="">Toutes les villes</option>
                 {uniqueLocations.map((location) => (
                   <option key={location} value={location}>
                     {location}
@@ -148,60 +168,39 @@ export function EventsFilters() {
             </div>
           )}
 
-          {/* Filtre par tags */}
-          {uniqueTags.length > 0 && (
-            <div>
-              <h4 className="font-medium text-gray-900 mb-3">Tags</h4>
-              <div className="flex flex-wrap gap-2">
-                {uniqueTags.slice(0, 10).map((tag) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                      filters.tags.includes(tag)
-                        ? 'bg-blue-100 text-blue-800 border border-blue-200'
-                        : 'bg-gray-100 text-gray-700 border border-gray-200 hover:bg-gray-200'
-                    }`}
-                  >
-                    {tag}
-                    {filters.tags.includes(tag) && (
-                      <XMarkIcon className="inline h-3 w-3 ml-1" />
-                    )}
-                  </button>
-                ))}
-              </div>
-              {uniqueTags.length > 10 && (
-                <p className="text-xs text-gray-500 mt-2">
-                  +{uniqueTags.length - 10} tags disponibles
-                </p>
-              )}
-            </div>
-          )}
 
           {/* Filtre par date */}
           <div>
             <h4 className="font-medium text-gray-900 mb-3">Période</h4>
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-gray-800 mb-1">
                   Date de début
                 </label>
                 <input
                   type="date"
                   value={filters.dateRange.start?.toISOString().split('T')[0] || ''}
                   onChange={(e) => handleDateRangeChange('start', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    filters.dateRange.start 
+                      ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                      : 'border-gray-300 text-gray-800'
+                  }`}
                 />
               </div>
               <div>
-                <label className="block text-sm text-gray-600 mb-1">
+                <label className="block text-sm text-gray-800 mb-1">
                   Date de fin
                 </label>
                 <input
                   type="date"
                   value={filters.dateRange.end?.toISOString().split('T')[0] || ''}
                   onChange={(e) => handleDateRangeChange('end', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    filters.dateRange.end 
+                      ? 'border-blue-500 bg-blue-50 text-blue-900 font-medium' 
+                      : 'border-gray-300 text-gray-800'
+                  }`}
                 />
               </div>
             </div>
@@ -218,7 +217,7 @@ export function EventsFilters() {
                     end: undefined
                   }
                 })}
-                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-800"
               >
                 Aujourd'hui
               </button>
@@ -233,7 +232,7 @@ export function EventsFilters() {
                     }
                   });
                 }}
-                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-800"
               >
                 Cette semaine
               </button>
@@ -248,7 +247,7 @@ export function EventsFilters() {
                     }
                   });
                 }}
-                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors col-span-2"
+                className="text-xs px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors col-span-2 text-gray-800"
               >
                 Ce mois
               </button>

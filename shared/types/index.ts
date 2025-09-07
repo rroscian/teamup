@@ -4,13 +4,28 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  username: string;
   avatar?: string;
   profile?: UserSportProfile;
   createdAt: Date;
   updatedAt: Date;
 }
 
+export interface UserProfile {
+  id?: string;
+  userId?: string;
+  firstName?: string;
+  lastName?: string;
+  avatar?: string;
+  bio?: string;
+  location?: any;
+  sports?: string[];
+  skillLevel?: string;
+  availability?: string[];
+}
+
 export interface UserSportProfile {
+  avatar?: string;
   favoriteSports: Sport[];
   skillLevels: SkillLevelBySport[];
   availability: UserAvailability;
@@ -114,6 +129,13 @@ export interface Event {
   status: EventStatus;
   price?: number;
   equipment?: string[];
+  // Additional properties for frontend compatibility
+  category?: 'sports' | 'social' | 'corporate';
+  type?: string;
+  date: Date; // Alias for startDate for backward compatibility
+  imageUrl?: string;
+  skillLevel?: SkillLevel; // Alias for level
+  currentParticipants?: number;
 }
 
 export interface EventFilters {
@@ -146,7 +168,13 @@ export enum Sport {
   Swimming = 'swimming',
   Badminton = 'badminton',
   TableTennis = 'table_tennis',
-  Other = 'other'
+  Gymnastics = 'gymnastics',
+  Hiking = 'hiking',
+  Jogging = 'jogging',
+  Dance = 'dance',
+  Rugby = 'rugby',
+  Handball = 'handball',
+  Other = 'autre'
 }
 
 export enum SkillLevel {
@@ -229,4 +257,51 @@ export interface UpdateProfileForm {
   name: string;
   email: string;
   avatar?: string;
+}
+
+// Message types
+export interface Message {
+  id: string;
+  content: string;
+  senderId: string;
+  sender: User;
+  receiverId?: string;
+  receiver?: User;
+  conversationId?: string;
+  conversation?: Conversation;
+  createdAt: Date;
+  updatedAt: Date;
+  isEdited: boolean;
+  isDeleted: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  type: 'direct' | 'event';
+  eventId?: string;
+  event?: Event;
+  messages: Message[];
+  participants: ConversationParticipant[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ConversationParticipant {
+  id: string;
+  conversationId: string;
+  userId: string;
+  user: User;
+  joinedAt: Date;
+  lastReadAt: Date;
+}
+
+export interface UserSearchResult {
+  id: string;
+  email: string;
+  username: string;
+  profile?: {
+    firstName?: string;
+    lastName?: string;
+    avatar?: string;
+  };
 }

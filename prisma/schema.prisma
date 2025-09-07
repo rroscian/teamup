@@ -55,6 +55,7 @@ model Event {
   maxParticipants Int
   minParticipants Int      @default(1)
   skillLevel      String[] // Array of accepted skill levels
+  tags            String[] @default([]) // Array of event tags
   status          String   @default("active") // active, cancelled, completed
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt

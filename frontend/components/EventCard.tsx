@@ -22,6 +22,12 @@ const sportIcons: Record<Sport, string> = {
   [Sport.Swimming]: '🏊',
   [Sport.Badminton]: '🏸',
   [Sport.TableTennis]: '🏓',
+  [Sport.Gymnastics]: '🤸',
+  [Sport.Hiking]: '🥾',
+  [Sport.Jogging]: '🏃‍♀️',
+  [Sport.Dance]: '💃',
+  [Sport.Rugby]: '🏈',
+  [Sport.Handball]: '🤾',
   [Sport.Other]: '🏃'
 };
 

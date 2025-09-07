@@ -1,117 +1,5 @@
 import { Event, EventStatus, Sport, SkillLevel, LocationType, EventLocation } from '@/shared/types';
 
-// Simulated event data
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: 'Match de Football Amical',
-    description: 'Venez jouer un match de foot décontracté entre amis!',
-    sport: Sport.Football,
-    location: {
-      name: 'Stade Municipal',
-      address: '123 rue du Sport',
-      city: 'Paris',
-      postalCode: '75001',
-      latitude: 48.8566,
-      longitude: 2.3522,
-      type: LocationType.Outdoor
-    },
-    maxParticipants: 22,
-    minParticipants: 10,
-    level: SkillLevel.Mixed,
-    startDate: new Date('2025-07-25T18:00:00'),
-    endDate: new Date('2025-07-25T20:00:00'),
-    createdById: '1',
-    participants: [],
-    createdAt: new Date('2025-07-19T10:00:00'),
-    updatedAt: new Date('2025-07-19T10:00:00'),
-    status: EventStatus.Published,
-    price: 0,
-    equipment: ['Chaussures de sport', 'Tenue de sport']
-  },
-  {
-    id: '2',
-    title: 'Tournoi de Tennis Double',
-    description: 'Tournoi de tennis en double pour joueurs intermédiaires.',
-    sport: Sport.Tennis,
-    location: {
-      name: 'Tennis Club Central',
-      address: '45 avenue des Courts',
-      city: 'Lyon',
-      postalCode: '69000',
-      latitude: 45.7640,
-      longitude: 4.8357,
-      type: LocationType.Outdoor
-    },
-    maxParticipants: 16,
-    minParticipants: 8,
-    level: SkillLevel.Intermediate,
-    startDate: new Date('2025-07-28T14:00:00'),
-    endDate: new Date('2025-07-28T18:00:00'),
-    createdById: '2',
-    participants: [],
-    createdAt: new Date('2025-07-18T15:00:00'),
-    updatedAt: new Date('2025-07-18T15:00:00'),
-    status: EventStatus.Published,
-    price: 15,
-    equipment: ['Raquette de tennis', 'Balles de tennis']
-  },
-  {
-    id: '3',
-    title: 'Session Running Matinale',
-    description: 'Jogging collectif de 10km dans le parc. Tous niveaux bienvenus!',
-    sport: Sport.Running,
-    location: {
-      name: 'Parc de la Tête d\'Or',
-      address: 'Place du Général Leclerc',
-      city: 'Lyon',
-      postalCode: '69006',
-      latitude: 45.7772,
-      longitude: 4.8558,
-      type: LocationType.Outdoor
-    },
-    maxParticipants: 30,
-    minParticipants: 5,
-    level: SkillLevel.Mixed,
-    startDate: new Date('2025-07-26T08:00:00'),
-    endDate: new Date('2025-07-26T09:30:00'),
-    createdById: '3',
-    participants: [],
-    createdAt: new Date('2025-07-17T20:00:00'),
-    updatedAt: new Date('2025-07-17T20:00:00'),
-    status: EventStatus.Published,
-    price: 0,
-    equipment: ['Chaussures de running', 'Bouteille d\'eau']
-  },
-  {
-    id: '4',
-    title: 'Basket 3x3 - Tournoi Urbain',
-    description: 'Tournoi de basket 3 contre 3. Ambiance street et fair-play!',
-    sport: Sport.Basketball,
-    location: {
-      name: 'Playground République',
-      address: '89 rue de la République',
-      city: 'Marseille',
-      postalCode: '13001',
-      latitude: 43.2965,
-      longitude: 5.3698,
-      type: LocationType.Outdoor
-    },
-    maxParticipants: 24,
-    minParticipants: 12,
-    level: SkillLevel.Advanced,
-    startDate: new Date('2025-07-30T16:00:00'),
-    endDate: new Date('2025-07-30T20:00:00'),
-    createdById: '1',
-    participants: [],
-    createdAt: new Date('2025-07-19T12:00:00'),
-    updatedAt: new Date('2025-07-19T12:00:00'),
-    status: EventStatus.Published,
-    price: 10,
-    equipment: ['Baskets', 'Short', 'Maillot']
-  }
-];
-
 export interface EventFilters {
   sport?: Sport;
   city?: string;
@@ -140,46 +28,62 @@ export interface CreateEventForm {
 export const eventService = {
   // Get all events with optional filters
   async getEvents(filters?: EventFilters): Promise<Event[]> {
-    let events = [...mockEvents];
+    try {
+      // Build query params from filters
+      const params = new URLSearchParams();
+      if (filters?.sport) params.append('sport', filters.sport);
+      if (filters?.city) params.append('city', filters.city);
+      if (filters?.level) params.append('level', filters.level);
+      if (filters?.status) params.append('status', filters.status);
+      if (filters?.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
+      if (filters?.startDate) params.append('startDate', filters.startDate.toISOString());
+      if (filters?.endDate) params.append('endDate', filters.endDate.toISOString());
 
-    if (filters) {
-      if (filters.sport) {
-        events = events.filter(e => e.sport === filters.sport);
+      const response = await fetch(`/api/events?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch events: ${response.statusText}`);
       }
-      if (filters.city) {
-        events = events.filter(e => e.location.city.toLowerCase() === filters.city?.toLowerCase());
-      }
-      if (filters.level) {
-        events = events.filter(e => e.level === filters.level);
-      }
-      if (filters.status) {
-        events = events.filter(e => e.status === filters.status);
-      }
-      if (filters.maxPrice !== undefined) {
-        events = events.filter(e => (e.price || 0) <= filters.maxPrice!);
-      }
-      if (filters.startDate) {
-        events = events.filter(e => new Date(e.startDate) >= filters.startDate!);
-      }
-      if (filters.endDate) {
-        events = events.filter(e => new Date(e.endDate) <= filters.endDate!);
-      }
+
+      const events: Event[] = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return events.map(event => ({
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      }));
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      throw new Error('Failed to fetch events');
     }
-
-    return events;
   },
 
   // Get upcoming events (next 30 days)
   async getUpcomingEvents(): Promise<Event[]> {
-    const now = new Date();
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    try {
+      const response = await fetch('/api/events?upcoming=true');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch upcoming events: ${response.statusText}`);
+      }
 
-    return this.getEvents({
-      startDate: now,
-      endDate: thirtyDaysFromNow,
-      status: EventStatus.Published
-    });
+      const events: Event[] = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return events.map(event => ({
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      }));
+    } catch (error) {
+      console.error('Error fetching upcoming events:', error);
+      throw new Error('Failed to fetch upcoming events');
+    }
   },
 
   // Get events by location (city)
@@ -189,93 +93,194 @@ export const eventService = {
 
   // Get event by ID
   async getEventById(id: string): Promise<Event | null> {
-    return mockEvents.find(event => event.id === id) || null;
+    try {
+      const response = await fetch(`/api/events/${id}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`Failed to fetch event: ${response.statusText}`);
+      }
+
+      const event: Event = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return {
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
+    } catch (error) {
+      console.error('Error fetching event by ID:', error);
+      return null;
+    }
   },
 
   // Create a new event
-  async createEvent(data: CreateEventForm, userId: string): Promise<Event> {
-    const newEvent: Event = {
-      id: String(mockEvents.length + 1),
-      ...data,
-      createdById: userId,
-      participants: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      status: EventStatus.Published
-    };
+  async createEvent(data: CreateEventForm): Promise<Event> {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({
+          ...data,
+          startDate: data.startDate.toISOString(),
+          endDate: data.endDate.toISOString(),
+        }),
+      });
 
-    mockEvents.push(newEvent);
-    return newEvent;
+      if (!response.ok) {
+        throw new Error(`Failed to create event: ${response.statusText}`);
+      }
+
+      const event: Event = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return {
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw new Error('Failed to create event');
+    }
   },
 
   // Update an event
   async updateEvent(id: string, data: Partial<CreateEventForm>): Promise<Event | null> {
-    const index = mockEvents.findIndex(e => e.id === id);
-    if (index === -1) return null;
+    try {
+      const updateData = { ...data };
+      if (data.startDate) {
+        updateData.startDate = data.startDate.toISOString() as any;
+      }
+      if (data.endDate) {
+        updateData.endDate = data.endDate.toISOString() as any;
+      }
 
-    mockEvents[index] = {
-      ...mockEvents[index],
-      ...data,
-      updatedAt: new Date()
-    };
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
+      });
 
-    return mockEvents[index];
+      if (!response.ok) {
+        if (response.status === 404) {
+          return null;
+        }
+        throw new Error(`Failed to update event: ${response.statusText}`);
+      }
+
+      const event: Event = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return {
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
+    } catch (error) {
+      console.error('Error updating event:', error);
+      return null;
+    }
   },
 
   // Delete an event
   async deleteEvent(id: string): Promise<boolean> {
-    const index = mockEvents.findIndex(e => e.id === id);
-    if (index === -1) return false;
+    try {
+      const response = await fetch(`/api/events/${id}`, {
+        method: 'DELETE',
+      });
 
-    mockEvents.splice(index, 1);
-    return true;
+      return response.ok;
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      return false;
+    }
   },
 
   // Join an event
-  async joinEvent(eventId: string, userId: string): Promise<Event | null> {
-    const event = mockEvents.find(e => e.id === eventId);
-    if (!event) return null;
+  async joinEvent(eventId: string): Promise<Event | null> {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`/api/events/${eventId}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+      });
 
-    // Check if user already joined
-    const alreadyJoined = event.participants.some(p => p.userId === userId);
-    if (alreadyJoined) return event;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Failed to join event: ${response.statusText}`);
+      }
 
-    // Check if event is full
-    if (event.participants.length >= event.maxParticipants) {
-      throw new Error('Event is full');
+      const event: Event = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return {
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
+    } catch (error) {
+      console.error('Error joining event:', error);
+      throw error;
     }
-
-    // Add participant
-    event.participants.push({
-      id: `${eventId}-${userId}`,
-      eventId,
-      userId,
-      status: 'attending' as const,
-      user: {} as any // In real app, would fetch user data
-    });
-
-    // Update status if full
-    if (event.participants.length === event.maxParticipants) {
-      event.status = EventStatus.Full;
-    }
-
-    event.updatedAt = new Date();
-    return event;
   },
 
   // Leave an event
-  async leaveEvent(eventId: string, userId: string): Promise<Event | null> {
-    const event = mockEvents.find(e => e.id === eventId);
-    if (!event) return null;
+  async leaveEvent(eventId: string): Promise<Event | null> {
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch(`/api/events/${eventId}/leave`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+      });
 
-    event.participants = event.participants.filter(p => p.userId !== userId);
-    
-    // Update status if was full
-    if (event.status === EventStatus.Full && event.participants.length < event.maxParticipants) {
-      event.status = EventStatus.Published;
+      if (!response.ok) {
+        return null;
+      }
+
+      const event: Event = await response.json();
+      
+      // Transform dates from strings back to Date objects
+      return {
+        ...event,
+        startDate: new Date(event.startDate),
+        endDate: new Date(event.endDate),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      };
+    } catch (error) {
+      console.error('Error leaving event:', error);
+      return null;
     }
-
-    event.updatedAt = new Date();
-    return event;
   }
 };

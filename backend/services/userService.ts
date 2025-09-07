@@ -131,18 +131,50 @@ export class UserService {
   }
 
   static async update(id: string, userData: Partial<UpdateProfileForm>): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
-    return prisma.user.update({
+    // Récupérer l'utilisateur existant avec son profil pour préserver les données
+    const existingUser = await prisma.user.findUnique({
       where: { id },
-      data: {
-        username: userData.name,
-        profile: {
+      include: { profile: true }
+    });
+
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    const updateData: any = {
+      email: userData.email,
+      username: userData.name,
+    };
+
+    // Gestion du profil avec préservation de l'avatar
+    if (userData.name || userData.avatar) {
+      const existingAvatar = existingUser.profile?.avatar;
+      
+      updateData.profile = {
+        upsert: {
+          create: {
+            firstName: userData.name?.split(' ')[0] || '',
+            lastName: userData.name?.split(' ').slice(1).join(' ') || '',
+            avatar: userData.avatar || existingAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email || id}`,
+            bio: '',
+            location: {},
+            sports: [],
+            availability: []
+          },
           update: {
-            firstName: userData.name?.split(' ')[0],
-            lastName: userData.name?.split(' ').slice(1).join(' '),
-            avatar: userData.avatar
+            ...(userData.name && {
+              firstName: userData.name.split(' ')[0] || '',
+              lastName: userData.name.split(' ').slice(1).join(' ') || '',
+            }),
+            ...(userData.avatar !== undefined && { avatar: userData.avatar })
           }
         }
-      },
+      };
+    }
+
+    return prisma.user.update({
+      where: { id },
+      data: updateData,
       include: { profile: true }
     });
   }
@@ -156,6 +188,33 @@ export class UserService {
     } catch {
       return false;
     }
+  }
+
+  /**
+   * Update user password
+   */
+  static async updatePassword(id: string, hashedPassword: string): Promise<void> {
+    await prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword }
+    });
+  }
+
+  /**
+   * Update user avatar
+   */
+  static async updateAvatar(id: string, avatarUrl: string): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        profile: {
+          update: {
+            avatar: avatarUrl
+          }
+        }
+      },
+      include: { profile: true }
+    });
   }
 
   /**

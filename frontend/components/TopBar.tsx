@@ -1,14 +1,68 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../hooks/useAuth';
+import { Menu, X, User, ChevronDown, Settings, LogOut, MessageSquare } from 'lucide-react';
 
 export function TopBar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const { user, isAuthenticated, loading, logout, checkAuthStatus } = useAuth();
+
+  // Debug and stable avatar management
+  const currentAvatarUrl = user?.profile?.avatar || user?.avatar;
+  const [previousAvatarUrl, setPreviousAvatarUrl] = useState<string | undefined>();
+  
+  useEffect(() => {
+    console.log('TopBar Avatar Debug:', {
+      currentAvatarUrl,
+      previousAvatarUrl,
+      userProfile: user?.profile,
+      userAvatar: user?.avatar,
+      userName: user?.name,
+      userUpdatedAt: user?.updatedAt
+    });
+    
+    if (currentAvatarUrl !== previousAvatarUrl && currentAvatarUrl) {
+      console.log('TopBar: Changing avatar URL from', previousAvatarUrl, 'to', currentAvatarUrl);
+      setImageLoaded(false);
+      setImageError(false);
+      setPreviousAvatarUrl(currentAvatarUrl);
+    }
+  }, [currentAvatarUrl, previousAvatarUrl, user?.name, user?.updatedAt]);
+
+  // Force auth check only when component mounts
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      checkAuthStatus();
+    }
+  }, []);
+
+  // Listen for profile update events
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      console.log('TopBar: Received userProfileUpdated event');
+      // Don't reset image states - let the URL change detection handle it
+      // setImageLoaded(false);
+      // setImageError(false);
+    };
+
+    window.addEventListener('userProfileUpdated', handleProfileUpdate);
+    return () => window.removeEventListener('userProfileUpdated', handleProfileUpdate);
+  }, []);
+
+
+  const handleLogout = () => {
+    logout();
+    setUserMenuOpen(false);
+    router.push('/');
+  };
 
   return (
     <header className="fixed w-full bg-white/95 backdrop-blur-sm z-50 shadow-sm">
@@ -30,12 +84,117 @@ export function TopBar() {
             <Link href="/events" className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:scale-105 transition-all duration-200 font-medium">
               Événements
             </Link>
-            <Link href="/login" className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:scale-105 transition-all duration-200 font-medium">
-              Connexion
-            </Link>
-            <Link href="/register" className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-2.5 rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium ml-2">
-              Rejoignez-nous!
-            </Link>
+            
+            {loading ? (
+              /* Loading state - show nothing to prevent flicker */
+              <div className="w-32"></div>
+            ) : isAuthenticated && user ? (
+              /* User Menu */
+              <>
+                <Link href="/messages" className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:scale-105 transition-all duration-200 font-medium">
+                  <MessageSquare className="w-5 h-5" />
+                </Link>
+                <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center space-x-2 text-[#2C3E50]/70 hover:text-[#00A8CC] hover:scale-105 transition-all duration-200 font-medium"
+                >
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-full bg-[#00A8CC]/10 border-2 border-[#00A8CC]/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {(() => {
+                        const avatarUrl = user?.profile?.avatar || user?.avatar;
+                        const hasValidAvatar = avatarUrl && avatarUrl.trim() !== '' && !imageError;
+                        
+                        if (hasValidAvatar) {
+                          return (
+                            <>
+                              {!imageLoaded && (
+                                <div className="absolute w-8 h-8 bg-[#00A8CC]/10 rounded-full animate-pulse" />
+                              )}
+                              <Image
+                                src={avatarUrl}
+                                alt="Photo de profil"
+                                width={32}
+                                height={32}
+                                key={`topbar-${user?.id}-${avatarUrl}-${user?.updatedAt || Date.now()}`}
+                                className={`w-full h-full object-cover transition-opacity duration-200 ${
+                                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                                }`}
+                                priority
+                                unoptimized
+                                onLoad={() => {
+                                  console.log('TopBar: Image loaded successfully', avatarUrl);
+                                  setImageLoaded(true);
+                                }}
+                                onError={(e) => {
+                                  console.log('TopBar: Image failed to load', avatarUrl, e);
+                                  setImageError(true);
+                                }}
+                              />
+                            </>
+                          );
+                        } else {
+                          console.log('TopBar: No valid avatar, showing fallback icon', { avatarUrl, imageError, user });
+                          return <User className="w-4 h-4 text-[#00A8CC]" />;
+                        }
+                      })()}
+                    </div>
+                    <span className="text-sm font-medium truncate max-w-32">{user.name || user.username}</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                    <Link
+                      href="/profile"
+                      className="flex items-center space-x-2 px-4 py-2 text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 transition-all duration-200"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <User className="w-4 h-4" />
+                      <span>Mon Profil</span>
+                    </Link>
+                    <Link
+                      href="/messages"
+                      className="flex items-center space-x-2 px-4 py-2 text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 transition-all duration-200"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Messagerie</span>
+                    </Link>
+                    {(user.username === 'admin' || user.name === 'admin') && (
+                      <Link
+                        href="/admin"
+                        className="flex items-center space-x-2 px-4 py-2 text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 transition-all duration-200"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Administration</span>
+                      </Link>
+                    )}
+                    <hr className="my-2" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-all duration-200"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Déconnexion</span>
+                    </button>
+                  </div>
+                )}
+                </div>
+              </>
+            ) : (
+              /* Login/Register Links */
+              <>
+                <Link href="/login" className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:scale-105 transition-all duration-200 font-medium">
+                  Connexion
+                </Link>
+                <Link href="/register" className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-8 py-2.5 rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-200 font-medium ml-2">
+                  Rejoignez-nous!
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -58,20 +217,60 @@ export function TopBar() {
               >
                 Événements
               </Link>
-              <Link 
-                href="/login" 
-                className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Connexion
-              </Link>
-              <Link 
-                href="/register" 
-                className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 py-3 rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-200 text-center font-medium"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Rejoignez-nous!
-              </Link>
+              {!loading && (
+                <>
+                  {isAuthenticated && user ? (
+                    <>
+                      <Link 
+                        href="/profile" 
+                        className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Mon Profil
+                      </Link>
+                      <Link 
+                        href="/messages" 
+                        className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Messagerie
+                      </Link>
+                      {(user.username === 'admin' || user.name === 'admin') && (
+                        <Link 
+                          href="/admin" 
+                          className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          Administration
+                        </Link>
+                      )}
+                      <button
+                        onClick={handleLogout}
+                        className="text-left text-red-600 hover:bg-red-50 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
+                      >
+                        Déconnexion
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link 
+                        href="/login" 
+                        className="text-[#2C3E50]/70 hover:text-[#00A8CC] hover:bg-[#00A8CC]/5 hover:scale-105 transition-all duration-200 py-2 px-2 rounded-md"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Connexion
+                      </Link>
+                      <Link 
+                        href="/register" 
+                        className="bg-[#FF6B35] hover:bg-[#e55a2b] text-white px-6 py-3 rounded-lg hover:shadow-xl hover:scale-105 transition-all duration-200 text-center font-medium"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Rejoignez-nous!
+                      </Link>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

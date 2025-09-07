@@ -1,34 +1,39 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useEvents, Event } from '@/frontend/contexts/EventsContext';
-import { XMarkIcon, PlusIcon } from '@heroicons/react/24/solid';
-import { CalendarIcon, MapPinIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CalendarIcon, MapPinIcon, UsersIcon, PlusIcon, PhotoIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { useEvents, Event, SportsEvent } from '@/frontend/contexts/EventsContext';
+import { Sport } from '@/shared/types';
 
 // Types locaux pour les catégories et types d'événements
-type EventCategory = 'sports' | 'social' | 'corporate';
+type EventCategory = 'sports' | 'social' | 'corporatif';
 type EventType = string;
 
 interface EventFormProps {
   event?: Event;
   isOpen: boolean;
   onClose: () => void;
+  isEmbedded?: boolean;
 }
 
-export function EventForm({ event, isOpen, onClose }: EventFormProps) {
+export function EventForm({ event, isOpen, onClose, isEmbedded = false }: EventFormProps) {
   const { addEvent, updateEvent } = useEvents();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'social' as EventCategory,
-    type: 'meetup' as EventType,
+    category: 'sports' as EventCategory,
+    type: 'tournoi' as EventType,
+    sport: Sport.Football,
     date: '',
     time: '',
     location: '',
     maxParticipants: '',
+    currentParticipants: 0,
+    skillLevel: 'intermediaire' as 'debutant' | 'intermediaire' | 'avance' | 'mixte',
     price: '',
-    tags: [] as string[],
-    newTag: ''
+    imageUrl: '',
+    equipment: [] as string[],
+    newEquipment: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,9 +41,9 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
 
   // Types par catégorie
   const typesByCategory = {
-    sports: ['tournament', 'training', 'match', 'other'],
-    social: ['meetup', 'party', 'workshop', 'networking', 'other'],
-    corporate: ['meeting', 'conference', 'training', 'team-building', 'other']
+    sports: ['tournoi', 'entrainement', 'match', 'autre'],
+    social: ['rencontre', 'fête', 'atelier', 'réseautage', 'autre'],
+    corporatif: ['réunion', 'conférence', 'formation', 'team-building', 'autre']
   };
 
   // Initialiser le formulaire avec les données de l'événement à éditer
@@ -51,14 +56,18 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
         title: event.title,
         description: event.description || '',
         category: event.category as EventCategory,
-        type: event.type,
+        type: event.type || 'tournoi',
+        sport: (event as any).sport || Sport.Football,
         date: eventDate,
         time: eventTime,
-        location: event.location,
+        location: typeof event.location === 'string' ? event.location : event.location.name || event.location.address,
         maxParticipants: (event as any).maxParticipants || '',
+        currentParticipants: (event as any).currentParticipants || 0,
+        skillLevel: (event as any).skillLevel || 'intermediaire',
         price: (event as any).price || '',
-        tags: event.tags || [],
-        newTag: ''
+        imageUrl: event.imageUrl || '',
+        equipment: (event as any).equipment || [],
+        newEquipment: ''
       });
     } else {
       // Réinitialiser le formulaire pour un nouvel événement
@@ -69,15 +78,19 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
       setFormData({
         title: '',
         description: '',
-        category: 'social',
-        type: 'meetup',
+        category: 'sports',
+        type: '',
+        sport: Sport.Football,
         date: today,
         time: currentTime,
         location: '',
         maxParticipants: '',
+        currentParticipants: 0,
+        skillLevel: 'intermediaire',
         price: '',
-        tags: [],
-        newTag: ''
+        imageUrl: '',
+        equipment: [],
+        newEquipment: ''
       });
     }
     setErrors({});
@@ -130,13 +143,28 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
       const eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'> = {
         title: formData.title.trim(),
         description: formData.description.trim() || '',
-        category: formData.category as EventCategory,
+        category: formData.category === 'corporatif' ? 'corporate' : formData.category,
         type: formData.type,
+        sport: formData.sport,
         date: eventDateTime,
-        location: formData.location.trim(),
-        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined,
+        startDate: eventDateTime,
+        endDate: eventDateTime,
+        location: {
+          name: formData.location.trim(),
+          address: formData.location.trim(),
+          city: formData.location.split(',')[0]?.trim() || formData.location.trim(),
+          postalCode: '',
+          type: 'outdoor' as const
+        } as any,
+        maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : 10,
+        minParticipants: 2,
+        level: formData.skillLevel as any,
         price: formData.price ? parseFloat(formData.price) : undefined,
-        tags: formData.tags.filter(tag => tag.trim()),
+        equipment: formData.equipment,
+        imageUrl: formData.imageUrl,
+        createdById: 'temp-user-id',
+        participants: [],
+        status: 'published' as any,
         // Gestion des propriétés spécifiques selon le type d'événement
         ...(formData.category === 'social' && {
           participants: (event as any)?.participants || [],
@@ -145,7 +173,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
         ...(formData.category === 'sports' && {
           maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : undefined
         }),
-        ...(formData.category === 'corporate' && {
+        ...(formData.category === 'corporatif' && {
           price: formData.price ? parseFloat(formData.price) : undefined
         })
       };
@@ -165,21 +193,22 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
     }
   };
 
-  const handleAddTag = () => {
-    const newTag = formData.newTag.trim();
-    if (newTag && !formData.tags.includes(newTag)) {
+
+  const handleAddEquipment = () => {
+    const newEquipment = formData.newEquipment.trim();
+    if (newEquipment && !formData.equipment.includes(newEquipment)) {
       setFormData({
         ...formData,
-        tags: [...formData.tags, newTag],
-        newTag: ''
+        equipment: [...formData.equipment, newEquipment],
+        newEquipment: ''
       });
     }
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
+  const handleRemoveEquipment = (equipmentToRemove: string) => {
     setFormData({
       ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove)
+      equipment: formData.equipment.filter(equipment => equipment !== equipmentToRemove)
     });
   };
 
@@ -194,29 +223,10 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
     });
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isEmbedded) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center p-4">
-        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
-        
-        <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              {event ? 'Modifier l\'événement' : 'Nouvel événement'}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <XMarkIcon className="h-6 w-6" />
-            </button>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-6">
             {/* Titre */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -253,24 +263,8 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
             {/* Catégorie et Type */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Catégorie *
-                </label>
-                <select
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => handleCategoryChange(e.target.value as EventCategory)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                >
-                  <option value="sports">Sports</option>
-                  <option value="social">Social</option>
-                  <option value="corporate">Corporate</option>
-                </select>
-              </div>
-
-              <div>
                 <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Type *
+                  Type d'événement sportif *
                 </label>
                 <select
                   id="type"
@@ -285,6 +279,77 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Sport (seulement pour la catégorie Sports) */}
+            {formData.category === 'sports' && (
+              <div>
+                <label htmlFor="sport" className="block text-sm font-medium text-gray-700 mb-2">
+                  Sport *
+                </label>
+                <select
+                  id="sport"
+                  value={formData.sport}
+                  onChange={(e) => setFormData({ ...formData, sport: e.target.value as Sport })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                >
+                  <option value={Sport.Football}>Football</option>
+                  <option value={Sport.Basketball}>Basketball</option>
+                  <option value={Sport.Tennis}>Tennis</option>
+                  <option value={Sport.Volleyball}>Volleyball</option>
+                  <option value={Sport.Running}>Course à pied</option>
+                  <option value={Sport.Cycling}>Cyclisme</option>
+                  <option value={Sport.Swimming}>Natation</option>
+                  <option value={Sport.Badminton}>Badminton</option>
+                  <option value={Sport.TableTennis}>Tennis de table</option>
+                  <option value={Sport.Gymnastics}>Gymnastique</option>
+                  <option value={Sport.Hiking}>Randonnée</option>
+                  <option value={Sport.Jogging}>Jogging</option>
+                  <option value={Sport.Dance}>Danse</option>
+                  <option value={Sport.Rugby}>Rugby</option>
+                  <option value={Sport.Handball}>Handball</option>
+                  <option value={Sport.Other}>Autre</option>
+                </select>
+              </div>
+            )}
+
+            {/* Niveau de compétence (seulement pour les sports) */}
+            {formData.category === 'sports' && (
+              <div>
+                <label htmlFor="skillLevel" className="block text-sm font-medium text-gray-700 mb-2">
+                  Niveau requis
+                </label>
+                <select
+                  id="skillLevel"
+                  value={formData.skillLevel}
+                  onChange={(e) => setFormData({ ...formData, skillLevel: e.target.value as 'debutant' | 'intermediaire' | 'avance' | 'mixte' })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                >
+                  <option value="debutant">Débutant</option>
+                  <option value="intermediaire">Intermédiaire</option>
+                  <option value="avance">Avancé</option>
+                  <option value="mixte">Tous niveaux</option>
+                </select>
+              </div>
+            )}
+
+            {/* URL de l'image */}
+            <div>
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                <PhotoIcon className="h-4 w-4 inline mr-1" />
+                URL de l'image
+              </label>
+              <input
+                type="url"
+                id="imageUrl"
+                placeholder="https://exemple.com/image.jpg"
+                value={formData.imageUrl}
+                onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Ajoutez une image pour illustrer votre événement
+              </p>
             </div>
 
             {/* Date et Heure */}
@@ -344,7 +409,7 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
             </div>
 
             {/* Participants et Prix */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <label htmlFor="maxParticipants" className="block text-sm font-medium text-gray-700 mb-2">
                   Nombre max de participants
@@ -361,6 +426,19 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
                   placeholder="Illimité"
                 />
                 {errors.maxParticipants && <p className="text-red-600 text-sm mt-1">{errors.maxParticipants}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <UsersIcon className="h-4 w-4 inline mr-1" />
+                  Participants actuels
+                </label>
+                <div className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-500 bg-gray-50">
+                  {event ? formData.currentParticipants : 0}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Nombre actuel d'inscrits
+                </p>
               </div>
 
               <div>
@@ -383,42 +461,43 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
               </div>
             </div>
 
-            {/* Tags */}
+
+            {/* Équipement requis */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags
+                Équipement requis
               </label>
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    value={formData.newTag}
-                    onChange={(e) => setFormData({ ...formData, newTag: e.target.value })}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+                    value={formData.newEquipment}
+                    onChange={(e) => setFormData({ ...formData, newEquipment: e.target.value })}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddEquipment())}
                     className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Ajouter un tag..."
+                    placeholder="Ajouter un équipement..."
                   />
                   <button
                     type="button"
-                    onClick={handleAddTag}
+                    onClick={handleAddEquipment}
                     className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Ajouter
                   </button>
                 </div>
                 
-                {formData.tags.length > 0 && (
+                {formData.equipment.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    {formData.tags.map((tag) => (
+                    {formData.equipment.map((equipment) => (
                       <span
-                        key={tag}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                        key={equipment}
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800"
                       >
-                        {tag}
+                        {equipment}
                         <button
                           type="button"
-                          onClick={() => handleRemoveTag(tag)}
-                          className="ml-2 hover:text-blue-600"
+                          onClick={() => handleRemoveEquipment(equipment)}
+                          className="ml-2 hover:text-green-600"
                         >
                           <XMarkIcon className="h-3 w-3" />
                         </button>
@@ -436,13 +515,15 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
 
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Annuler
-              </button>
+              {!isEmbedded && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Annuler
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -452,6 +533,39 @@ export function EventForm({ event, isOpen, onClose }: EventFormProps) {
               </button>
             </div>
           </form>
+  );
+
+  if (isEmbedded) {
+    return (
+      <div className="p-6">
+        {formContent}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-25" onClick={onClose} />
+        
+        <div className="relative w-full max-w-2xl bg-white rounded-lg shadow-xl">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">
+              {event ? 'Modifier l\'événement' : 'Nouvel événement'}
+            </h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <XMarkIcon className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* Form */}
+          <div className="p-6">
+            {formContent}
+          </div>
         </div>
       </div>
     </div>

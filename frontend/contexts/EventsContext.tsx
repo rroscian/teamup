@@ -1,56 +1,50 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Event, Sport, SkillLevel } from '@/shared/types';
 
-// Types pour les événements
-export interface BaseEvent {
-  id: string;
-  title: string;
-  description: string;
-  date: Date;
-  location: string;
-  type: string;
-  category: string;
-  imageUrl?: string;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Export Event type for components
+export type { Event };
 
-export interface SportsEvent extends BaseEvent {
-  sport: string;
-  maxParticipants: number;
+// Specialized event types for different categories
+export interface SportsEvent extends Event {
+  category: 'sports';
+  sport: Sport;
+  skillLevel: SkillLevel;
   currentParticipants: number;
-  skillLevel: 'beginner' | 'intermediate' | 'advanced';
-  equipment?: string[];
+  type: string;
 }
 
-export interface SocialEvent extends BaseEvent {
-  ageRange?: string;
+export interface SocialEvent extends Event {
+  category: 'social';
   cost?: number;
-  registrationRequired: boolean;
+  ageRange?: string;
+  registrationRequired?: boolean;
 }
 
-export interface CorporateEvent extends BaseEvent {
+export interface CorporateEvent extends Event {
+  category: 'corporate';
   company: string;
   department?: string;
   isPublic: boolean;
-  contactEmail: string;
 }
 
-export type Event = SportsEvent | SocialEvent | CorporateEvent;
+// Union type for all event categories
+export type EventWithCategory = SportsEvent | SocialEvent | CorporateEvent;
+import { eventService } from '@/backend/services/eventService';
+import { useAuth } from '@/frontend/hooks/useAuth';
 
 // Types pour les filtres
 export interface EventFilters {
   search: string;
-  category: string;
-  type: string;
+  sport?: Sport;
+  level?: SkillLevel;
+  maxPrice?: number;
   dateRange: {
     start?: Date;
     end?: Date;
   };
   location: string;
-  tags: string[];
 }
 
 // Types pour les options d'affichage
@@ -78,12 +72,13 @@ interface EventsContextType {
   setViewOptions: (options: Partial<ViewOptions>) => void;
   
   // Actions CRUD
-  addEvent: (event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addEvent: (event: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Event>;
   updateEvent: (id: string, event: Partial<Event>) => void;
   deleteEvent: (id: string) => void;
   
   // Utilitaires
   filteredEvents: Event[];
+  suggestedEvents: Event[];
   totalPages: number;
   currentPage: number;
   setCurrentPage: (page: number) => void;
@@ -93,11 +88,11 @@ interface EventsContextType {
 // Valeurs par défaut
 const defaultFilters: EventFilters = {
   search: '',
-  category: '',
-  type: '',
+  sport: undefined,
+  level: undefined,
+  maxPrice: undefined,
   dateRange: {},
-  location: '',
-  tags: []
+  location: ''
 };
 
 const defaultViewOptions: ViewOptions = {
@@ -114,11 +109,31 @@ const EventsContext = createContext<EventsContextType | undefined>(undefined);
 export function EventsProvider({ children }: { children: ReactNode }) {
   // États
   const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<EventFilters>(defaultFilters);
   const [viewOptions, setViewOptionsState] = useState<ViewOptions>(defaultViewOptions);
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const { user, isAuthenticated } = useAuth();
+
+  // Charger les événements au démarrage
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const eventList = await eventService.getEvents();
+      setEvents(eventList);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des événements');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Gestion des filtres
   const setFilters = (newFilters: Partial<EventFilters>) => {
@@ -145,41 +160,41 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(event =>
         event.title.toLowerCase().includes(searchLower) ||
-        event.description.toLowerCase().includes(searchLower) ||
-        event.location.toLowerCase().includes(searchLower)
+        (event.description && event.description.toLowerCase().includes(searchLower)) ||
+        event.location.city.toLowerCase().includes(searchLower) ||
+        event.sport.toLowerCase().includes(searchLower)
       );
     }
 
-    // Filtre par catégorie
-    if (filters.category) {
-      filtered = filtered.filter(event => event.category === filters.category);
+    // Filtre par sport
+    if (filters.sport) {
+      filtered = filtered.filter(event => event.sport === filters.sport);
     }
 
-    // Filtre par type
-    if (filters.type) {
-      filtered = filtered.filter(event => event.type === filters.type);
+    // Filtre par niveau
+    if (filters.level) {
+      filtered = filtered.filter(event => event.level === filters.level);
+    }
+
+    // Filtre par prix maximum
+    if (filters.maxPrice !== undefined) {
+      filtered = filtered.filter(event => (event.price || 0) <= filters.maxPrice!);
     }
 
     // Filtre par localisation
     if (filters.location) {
       filtered = filtered.filter(event =>
-        event.location.toLowerCase().includes(filters.location.toLowerCase())
+        event.location.city.toLowerCase().includes(filters.location.toLowerCase())
       );
     }
 
-    // Filtre par tags
-    if (filters.tags.length > 0) {
-      filtered = filtered.filter(event =>
-        filters.tags.some(tag => event.tags.includes(tag))
-      );
-    }
 
     // Filtre par date
     if (filters.dateRange.start) {
-      filtered = filtered.filter(event => event.date >= filters.dateRange.start!);
+      filtered = filtered.filter(event => event.startDate >= filters.dateRange.start!);
     }
     if (filters.dateRange.end) {
-      filtered = filtered.filter(event => event.date <= filters.dateRange.end!);
+      filtered = filtered.filter(event => event.startDate <= filters.dateRange.end!);
     }
 
     // Tri
@@ -188,7 +203,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
       
       switch (viewOptions.sortBy) {
         case 'date':
-          comparison = a.date.getTime() - b.date.getTime();
+          comparison = a.startDate.getTime() - b.startDate.getTime();
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -206,19 +221,77 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     return filtered;
   }, [events, filters, viewOptions.sortBy, viewOptions.sortOrder]);
 
+  // Événements suggérés basés sur le profil utilisateur
+  const suggestedEvents = React.useMemo(() => {
+    if (!isAuthenticated || !user?.profile) {
+      return [];
+    }
+
+    const userFavoriteSports = user.profile.favoriteSports || [];
+    const userSkillLevels = user.profile.skillLevels || [];
+    const userCity = user.profile.location?.city;
+
+    // Filtrer les événements selon les préférences utilisateur
+    let suggestions = events.filter(event => {
+      // Événements dans les sports favoris
+      const isFavoriteSport = userFavoriteSports.includes(event.sport);
+      
+      // Événements dans la même ville ou niveau compatible
+      const isSameCity = userCity ? event.location.city === userCity : true;
+      const userSkillForSport = userSkillLevels.find(sl => sl.sport === event.sport);
+      const isCompatibleLevel = !userSkillForSport || 
+        event.level === 'mixed' || 
+        userSkillForSport.level === event.level;
+
+      return isFavoriteSport && isSameCity && isCompatibleLevel;
+    });
+
+    // Si pas assez de suggestions avec les sports favoris, ajouter des événements similaires
+    if (suggestions.length < 5) {
+      const additionalEvents = events.filter(event => {
+        const notAlreadyIncluded = !suggestions.find(s => s.id === event.id);
+        const isSameCity = userCity ? event.location.city === userCity : true;
+        return notAlreadyIncluded && isSameCity;
+      });
+      
+      suggestions = [...suggestions, ...additionalEvents].slice(0, 5);
+    }
+
+    // Trier par date de début
+    return suggestions
+      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
+      .slice(0, 4);
+  }, [events, user, isAuthenticated]);
+
   // Calcul de pagination
   const totalPages = Math.ceil(filteredEvents.length / viewOptions.itemsPerPage);
 
   // Actions CRUD
-  const addEvent = (newEvent: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const event: Event = {
-      ...newEvent,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as Event;
-    
-    setEvents(prev => [...prev, event]);
+  const addEvent = async (newEvent: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      // Créer l'événement via l'API
+      const createdEvent = await eventService.createEvent({
+        title: newEvent.title,
+        description: newEvent.description,
+        sport: newEvent.sport,
+        location: newEvent.location,
+        maxParticipants: newEvent.maxParticipants || 10,
+        minParticipants: newEvent.minParticipants || 2,
+        level: newEvent.level,
+        startDate: newEvent.startDate,
+        endDate: newEvent.endDate,
+        price: newEvent.price,
+        equipment: newEvent.equipment || [],
+      });
+
+      // Ajouter l'événement créé à la liste locale
+      setEvents(prev => [...prev, createdEvent]);
+      
+      return createdEvent;
+    } catch (error) {
+      console.error('Erreur lors de la création de l\'événement:', error);
+      throw error;
+    }
   };
 
   const updateEvent = (id: string, updatedEvent: Partial<Event>) => {
@@ -236,12 +309,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshEvents = () => {
-    // TODO: Implémenter le rechargement depuis l'API
-    setLoading(true);
-    // Simulation d'un appel API
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    loadEvents();
   };
 
   // Valeur du contexte
@@ -267,6 +335,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     
     // Utilitaires
     filteredEvents,
+    suggestedEvents,
     totalPages,
     currentPage,
     setCurrentPage,

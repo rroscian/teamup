@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eventService, EventFilters } from '@/backend/services/eventService';
+import { eventServiceServer, EventFilters } from '@/backend/services/eventService.server';
 import { Sport, SkillLevel, EventStatus } from '@/shared/types';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,12 +48,20 @@ export async function GET(request: NextRequest) {
     // Special endpoints
     const upcoming = searchParams.get('upcoming');
     if (upcoming === 'true') {
-      const events = await eventService.getUpcomingEvents();
+      const now = new Date();
+      const thirtyDaysFromNow = new Date();
+      thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+      
+      const events = await eventServiceServer.getEvents({
+        startDate: now,
+        endDate: thirtyDaysFromNow,
+        status: EventStatus.Published
+      });
       return NextResponse.json(events);
     }
     
     // Get events with filters
-    const events = await eventService.getEvents(filters);
+    const events = await eventServiceServer.getEvents(filters);
     
     return NextResponse.json(events);
   } catch (error) {
@@ -66,10 +75,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Get authenticated user
+    const user = await requireAuth(request);
     
-    // TODO: Get actual user ID from authentication
-    const userId = '1'; // Mock user ID
+    const body = await request.json();
     
     // Validate required fields
     if (!body.title || !body.sport || !body.location || !body.maxParticipants || 
@@ -85,11 +94,20 @@ export async function POST(request: NextRequest) {
     body.endDate = new Date(body.endDate);
     
     // Create the event
-    const newEvent = await eventService.createEvent(body, userId);
+    const newEvent = await eventServiceServer.createEvent(body, user.id);
     
     return NextResponse.json(newEvent, { status: 201 });
   } catch (error) {
     console.error('Error creating event:', error);
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create event' },
       { status: 500 }

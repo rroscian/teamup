@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { eventService } from '@/backend/services/eventService';
+import { eventServiceServer } from '@/backend/services/eventService.server';
+import { requireAuth } from '@/lib/auth-server';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Get actual user ID from authentication
-    const userId = '1'; // Mock user ID for now
+    // Get authenticated user
+    const user = await requireAuth(request);
     
     const { id } = await params;
-    const event = await eventService.leaveEvent(id, userId);
+    const event = await eventServiceServer.leaveEvent(id, user.id);
     
     if (!event) {
       return NextResponse.json(
@@ -22,6 +23,15 @@ export async function POST(
     return NextResponse.json(event);
   } catch (error) {
     console.error('Error leaving event:', error);
+    
+    // Handle authentication errors
+    if (error instanceof Error && error.message === 'Authentication required') {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Failed to leave event' },
       { status: 500 }

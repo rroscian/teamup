@@ -25,11 +25,11 @@ const EventsManagement: React.FC = () => {
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.location.toLowerCase().includes(searchTerm.toLowerCase());
+                         event.location.city.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = filterCategory === 'all' || event.category === filterCategory;
     
-    const eventStatus = new Date(event.date) > new Date() ? 'upcoming' : 'past';
+    const eventStatus = new Date(event.startDate) > new Date() ? 'upcoming' : 'past';
     const matchesStatus = filterStatus === 'all' || eventStatus === filterStatus;
     
     return matchesSearch && matchesCategory && matchesStatus;
@@ -209,19 +209,19 @@ const EventsManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadgeColor(event.category)}`}>
-                      {event.category}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryBadgeColor(event.category || 'sports')}`}>
+                      {event.category || 'sports'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(event.date).toLocaleDateString('fr-FR')}
+                    {new Date(event.startDate).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
-                    {event.location}
+                    {event.location.name || event.location.city}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(event.date.toString())}`}>
-                      {new Date(event.date) > new Date() ? 'À venir' : 'Passé'}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeColor(event.startDate.toString())}`}>
+                      {new Date(event.startDate) > new Date() ? 'À venir' : 'Passé'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

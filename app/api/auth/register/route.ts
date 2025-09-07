@@ -6,21 +6,33 @@ import { registerSchema, validateData } from '@/backend/middleware/validation';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('Registration request body:', JSON.stringify(body, null, 2));
     
     // Validate input data
     const validation = validateData(registerSchema, body);
     if (validation.error) {
+      console.error('Validation error:', validation.error);
       return NextResponse.json(
-        { error: validation.error },
+        { 
+          success: false,
+          error: {
+            message: validation.error,
+            code: 'VALIDATION_ERROR'
+          }
+        },
         { status: 400 }
       );
     }
     
+    console.log('Validation passed, creating user...');
+    
     // Create user (cast validated data to UserRegistration type)
     const user = await UserService.register(validation.data as UserRegistration);
+    console.log('User created successfully:', { id: user.id, email: user.email });
     
     return NextResponse.json({
-      user: user,
+      success: true,
+      data: user,
       message: 'Registration successful'
     });
   } catch (error) {
@@ -30,13 +42,25 @@ export async function POST(request: NextRequest) {
     
     if (errorMessage === 'User with this email already exists') {
       return NextResponse.json(
-        { error: errorMessage },
+        { 
+          success: false,
+          error: {
+            message: errorMessage,
+            code: 'EMAIL_EXISTS'
+          }
+        },
         { status: 409 } // Conflict
       );
     }
     
     return NextResponse.json(
-      { error: 'Registration failed' },
+      { 
+        success: false,
+        error: {
+          message: 'Registration failed',
+          code: 'REGISTRATION_ERROR'
+        }
+      },
       { status: 500 }
     );
   }

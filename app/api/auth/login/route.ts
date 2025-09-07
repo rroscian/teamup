@@ -11,7 +11,13 @@ export async function POST(request: NextRequest) {
     const validation = validateData(loginSchema, body);
     if (validation.error) {
       return NextResponse.json(
-        { error: validation.error },
+        { 
+          success: false,
+          error: {
+            message: validation.error,
+            code: 'VALIDATION_ERROR'
+          }
+        },
         { status: 400 }
       );
     }
@@ -23,7 +29,13 @@ export async function POST(request: NextRequest) {
     
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { 
+          success: false,
+          error: {
+            message: 'Invalid email or password',
+            code: 'INVALID_CREDENTIALS'
+          }
+        },
         { status: 401 }
       );
     }
@@ -68,7 +80,8 @@ export async function POST(request: NextRequest) {
 
     // Set cookie with the token
     const response = NextResponse.json({
-      user: responseUser,
+      success: true,
+      data: responseUser,
       token,
       message: 'Login successful'
     });
@@ -87,7 +100,13 @@ export async function POST(request: NextRequest) {
     console.error('Login error:', error);
     
     return NextResponse.json(
-      { error: 'Login failed' },
+      { 
+        success: false,
+        error: {
+          message: 'Internal server error',
+          code: 'SERVER_ERROR'
+        }
+      },
       { status: 500 }
     );
   }

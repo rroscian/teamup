@@ -79,7 +79,7 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex justify-center items-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
@@ -129,7 +129,13 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
                    s === Sport.Cycling ? 'Cyclisme' :
                    s === Sport.Swimming ? 'Natation' :
                    s === Sport.Badminton ? 'Badminton' :
-                   s === Sport.TableTennis ? 'Tennis de table' : 'Autre'}
+                   s === Sport.TableTennis ? 'Tennis de table' :
+                   s === Sport.Gymnastics ? 'Gymnastique' :
+                   s === Sport.Hiking ? 'Randonnée' :
+                   s === Sport.Jogging ? 'Jogging' :
+                   s === Sport.Dance ? 'Danse' :
+                   s === Sport.Rugby ? 'Rugby' :
+                   s === Sport.Handball ? 'Handball' : 'Autre'}
                 </option>
               ))}
             </select>

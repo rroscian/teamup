@@ -23,7 +23,7 @@ export class TeamService {
       teamId: '1',
       role: 'owner',
       joinedAt: new Date('2024-01-15'),
-      user: {} as User, // Will be populated by populateUserData
+      user: { id: '', email: '', name: '', username: '', createdAt: new Date(), updatedAt: new Date() } as User, // Will be populated by populateUserData
     },
   ];
 
@@ -75,7 +75,7 @@ export class TeamService {
       teamId: newTeam.id,
       role: 'owner',
       joinedAt: new Date(),
-      user: {} as User,
+      user: { id: '', email: '', name: '', username: '', createdAt: new Date(), updatedAt: new Date() } as User,
     };
 
     this.teams.push(newTeam);
@@ -112,6 +112,7 @@ export class TeamService {
         id: user.id,
         email: user.email,
         name: user.username, // Map username to name for type compatibility
+        username: user.username,
         avatar: user.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
         profile: user.profile ? {
           favoriteSports: user.profile.sports as import('../../shared/types').Sport[],
@@ -201,6 +202,7 @@ export class TeamService {
           id: user.id,
           email: user.email,
           name: user.username, // Map username to name for type compatibility
+          username: user.username,
           avatar: user.profile?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
           profile: user.profile ? {
             favoriteSports: user.profile.sports as import('../../shared/types').Sport[],
