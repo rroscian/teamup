@@ -18,6 +18,12 @@ export async function POST(
       return NextResponse.json({ success: true });
     } catch (error) {
       console.error('Error marking messages as read:', error);
+      
+      // Handle authorization errors more gracefully
+      if (error instanceof Error && error.message.includes('Unauthorized: User is not part of this conversation')) {
+        return NextResponse.json({ error: 'Access denied to this conversation' }, { status: 403 });
+      }
+      
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });

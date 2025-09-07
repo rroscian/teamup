@@ -142,7 +142,7 @@ export function LoginForm() {
           <Link href="/register">
             <Button
               variant="outline"
-              className="w-full border-[#00A8CC] text-[#00A8CC] hover:bg-[#00A8CC] hover:text-white"
+              className="w-full border-[#00A8CC] text-[#00A8CC] hover:bg-[#00A8CC] hover:text-gray-800"
             >
               Créer un compte
             </Button>

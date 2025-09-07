@@ -27,6 +27,12 @@ export async function GET(
       return NextResponse.json(messages);
     } catch (error) {
       console.error('Error fetching messages:', error);
+      
+      // Handle authorization errors more gracefully
+      if (error instanceof Error && error.message.includes('Unauthorized: User is not part of this conversation')) {
+        return NextResponse.json({ error: 'Access denied to this conversation' }, { status: 403 });
+      }
+      
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
@@ -57,6 +63,12 @@ export async function POST(
       return NextResponse.json(message);
     } catch (error) {
       console.error('Error sending message:', error);
+      
+      // Handle authorization errors more gracefully
+      if (error instanceof Error && error.message.includes('Unauthorized: User is not part of this conversation')) {
+        return NextResponse.json({ error: 'Access denied to this conversation' }, { status: 403 });
+      }
+      
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   });
