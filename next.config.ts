@@ -4,9 +4,7 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   compress: true,
   poweredByHeader: false,
-  experimental: {
-    serverComponentsExternalPackages: ['prisma', '@prisma/client'],
-  },
+  serverExternalPackages: ['prisma', '@prisma/client'],
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals.push('_http_common');
