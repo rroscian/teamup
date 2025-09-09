@@ -8,64 +8,61 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String @unique
-  username String @unique
-  password String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  profile       UserProfile?
-  events        Event[]
-  participations EventParticipation[]
-  sentMessages   Message[] @relation("MessageSender")
-  receivedMessages Message[] @relation("MessageReceiver")
-  conversations  ConversationParticipant[]
-  
+  id               String                    @id @default(cuid())
+  email            String                    @unique
+  username         String                    @unique
+  password         String
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+  conversations    ConversationParticipant[]
+  participations   EventParticipation[]
+  events           Event[]
+  receivedMessages Message[]                 @relation("MessageReceiver")
+  sentMessages     Message[]                 @relation("MessageSender")
+  profile          UserProfile?
+
   @@map("users")
 }
 
 model UserProfile {
-  id           String @id @default(cuid())
-  userId       String @unique
-  firstName    String?
-  lastName     String?
-  avatar       String?
-  bio          String?
-  location     Json? // { address: string, coordinates: [lat, lng] }
-  sports       String[] // Array of preferred sports
-  skillLevel   String? // beginner, intermediate, advanced
-  availability String[] // Array of preferred time slots
-  
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  firstName            String?
+  lastName             String?
+  avatar               String?
+  bio                  String?
+  location             Json?
+  sports               String[]
+  skillLevel           String?
+  availability         String[]
+  enableGeolocation    Boolean  @default(false)
+  lastKnownPosition    Json?    // { lat: number, lng: number, timestamp: Date }
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("user_profiles")
 }
 
 model Event {
-  id              String   @id @default(cuid())
+  id              String               @id @default(cuid())
   title           String
   description     String?
   sport           String
   date            DateTime
   startTime       String
-  duration        Int // minutes
-  location        Json // { address: string, coordinates: [lat, lng] }
+  duration        Int
+  location        Json
+  coordinates     Json?                // { lat: number, lng: number }
   maxParticipants Int
-  minParticipants Int      @default(1)
-  skillLevel      String[] // Array of accepted skill levels
-  status          String   @default("active") // active, cancelled, completed
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  // Relations
-  creatorId     String
-  creator       User @relation(fields: [creatorId], references: [id])
-  participants  EventParticipation[]
-  conversations Conversation[]
-  
-  // Indexes pour optimiser les requêtes
+  minParticipants Int                  @default(1)
+  skillLevel      String[]
+  status          String               @default("active")
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  creatorId       String
+  conversations   Conversation[]
+  participants    EventParticipation[]
+  creator         User                 @relation(fields: [creatorId], references: [id])
+
   @@index([sport, date])
   @@index([date])
   @@index([creatorId])
@@ -73,63 +70,59 @@ model Event {
 }
 
 model EventParticipation {
-  id        String   @id @default(cuid())
-  eventId   String
-  userId    String
-  status    String   @default("interested") // interested, confirmed, waitlist, declined, no_show
-  joinedAt  DateTime @default(now())
+  id          String    @id @default(cuid())
+  eventId     String
+  userId      String
+  status      String    @default("interested")
+  joinedAt    DateTime  @default(now())
   confirmedAt DateTime?
-  
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([eventId, userId])
   @@map("event_participations")
 }
 
 model Conversation {
-  id        String   @id @default(cuid())
-  eventId   String?
-  type      String   // event, direct
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  event        Event? @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  messages     Message[]
+  id           String                    @id @default(cuid())
+  eventId      String?
+  type         String
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
   participants ConversationParticipant[]
-  
+  event        Event?                    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
   @@map("conversations")
 }
 
 model ConversationParticipant {
-  id             String @id @default(cuid())
+  id             String       @id @default(cuid())
   conversationId String
   userId         String
-  joinedAt       DateTime @default(now())
-  lastReadAt     DateTime @default(now())
-  
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  joinedAt       DateTime     @default(now())
+  lastReadAt     DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([conversationId, userId])
   @@map("conversation_participants")
 }
 
 model Message {
-  id             String   @id @default(cuid())
+  id             String        @id @default(cuid())
   content        String
   senderId       String
   receiverId     String?
   conversationId String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  isEdited       Boolean  @default(false)
-  isDeleted      Boolean  @default(false)
-  
-  sender       User          @relation("MessageSender", fields: [senderId], references: [id])
-  receiver     User?         @relation("MessageReceiver", fields: [receiverId], references: [id])
-  conversation Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  isEdited       Boolean       @default(false)
+  isDeleted      Boolean       @default(false)
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  receiver       User?         @relation("MessageReceiver", fields: [receiverId], references: [id])
+  sender         User          @relation("MessageSender", fields: [senderId], references: [id])
+
   @@index([conversationId, createdAt])
   @@map("messages")
 }

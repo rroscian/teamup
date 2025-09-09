@@ -8,6 +8,9 @@ export interface EventFilters {
   endDate?: Date;
   status?: EventStatus;
   maxPrice?: number;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
 }
 
 export interface CreateEventForm {
@@ -23,6 +26,14 @@ export interface CreateEventForm {
   price?: number;
   equipment?: string[];
   teamId?: string;
+  imageUrl?: string;
+  category?: 'sports' | 'social' | 'corporate';
+  type?: string;
+  skillLevel?: SkillLevel;
+  currentParticipants?: number;
+  createdById?: string;
+  participants?: any[];
+  status?: any;
 }
 
 export const eventService = {
@@ -38,6 +49,9 @@ export const eventService = {
       if (filters?.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
       if (filters?.startDate) params.append('startDate', filters.startDate.toISOString());
       if (filters?.endDate) params.append('endDate', filters.endDate.toISOString());
+      if (filters?.latitude !== undefined) params.append('latitude', filters.latitude.toString());
+      if (filters?.longitude !== undefined) params.append('longitude', filters.longitude.toString());
+      if (filters?.radius !== undefined) params.append('radius', filters.radius.toString());
 
       const response = await fetch(`/api/events?${params.toString()}`);
       if (!response.ok) {

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
+import { MobileMessagingInterface } from './MobileMessagingInterface';
 import { UserSearch } from './UserSearch';
 import { useAuth } from '@/frontend/hooks/useAuth';
+import { useIsMobile } from '@/frontend/hooks/useIsMobile';
 import { Conversation, Message, UserSearchResult } from '@/shared/types';
 
 export const MessagingInterface: React.FC = () => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -97,6 +100,13 @@ export const MessagingInterface: React.FC = () => {
 
   // Sélectionner une conversation
   const handleSelectConversation = useCallback((conversationId: string) => {
+    // Si conversationId est vide, déselectionner
+    if (!conversationId) {
+      setSelectedConversation(null);
+      setMessages([]);
+      return;
+    }
+    
     setSelectedConversation(conversationId);
     loadMessages(conversationId, true); // Afficher le loader lors du changement de conversation
     markAsRead(conversationId);
@@ -130,6 +140,23 @@ export const MessagingInterface: React.FC = () => {
     return <div>Chargement...</div>;
   }
 
+  // Interface mobile
+  if (isMobile) {
+    return (
+      <MobileMessagingInterface
+        conversations={conversations}
+        selectedConversation={selectedConversation}
+        messages={messages}
+        loading={loading}
+        onSelectConversation={handleSelectConversation}
+        onSelectUser={handleSelectUser}
+        onSendMessage={sendMessage}
+        onLoadConversations={loadConversations}
+      />
+    );
+  }
+
+  // Interface desktop
   return (
     <div className="flex h-full bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Liste des conversations */}

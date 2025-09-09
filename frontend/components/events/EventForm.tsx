@@ -149,6 +149,8 @@ export function EventForm({ event, isOpen, onClose, isEmbedded = false }: EventF
         date: eventDateTime,
         startDate: eventDateTime,
         endDate: eventDateTime,
+        startTime: formData.time,
+        duration: 60, // Durée par défaut en minutes
         location: {
           name: formData.location.trim(),
           address: formData.location.trim(),

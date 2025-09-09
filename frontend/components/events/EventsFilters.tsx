@@ -4,10 +4,17 @@ import React, { useState } from 'react';
 import { useEvents } from '@/frontend/contexts/EventsContext';
 import { Sport, SkillLevel } from '@/shared/types';
 import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { useGeolocation, calculateDistance } from '@/frontend/hooks/useGeolocation';
+import { useToast } from '@/frontend/contexts/ToastContext';
 
 export function EventsFilters() {
   const { filters, setFilters, clearFilters, events } = useEvents();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [nearbyFilter, setNearbyFilter] = useState(false);
+
+  // Géolocalisation
+  const { position, error: geoError, loading: geoLoading, requestPermission } = useGeolocation(false);
+  const { showWarning } = useToast();
 
   // Extraire les valeurs uniques pour les filtres
   const uniqueLocations = Array.from(new Set(events.map(e => e.location.city))).filter(Boolean);
@@ -41,13 +48,50 @@ export function EventsFilters() {
     });
   };
 
+  const handleNearbyFilterChange = async (checked: boolean) => {
+    setNearbyFilter(checked);
+    
+    if (checked) {
+      if (!position) {
+        // Demander la permission de géolocalisation
+        const permissionGranted = await requestPermission();
+        if (!permissionGranted || geoError) {
+          showWarning('Cette fonctionnalité n\'est disponible qu\'avec la géolocalisation activée.');
+          setNearbyFilter(false);
+          return;
+        }
+        // Si on n'a toujours pas la position, on ne peut pas filtrer
+        if (!position) {
+          showWarning('Impossible d\'obtenir votre position. Veuillez réessayer.');
+          setNearbyFilter(false);
+          return;
+        }
+      }
+      
+      // Appliquer le filtre géographique
+      setFilters({ 
+        latitude: position.lat, 
+        longitude: position.lng, 
+        radius: 10 
+      });
+    } else {
+      // Retirer le filtre géographique
+      setFilters({ 
+        latitude: undefined, 
+        longitude: undefined, 
+        radius: undefined 
+      });
+    }
+  };
+
   const hasActiveFilters = 
     filters.location || 
     filters.sport ||
     filters.level ||
     filters.maxPrice !== undefined ||
     filters.dateRange.start || 
-    filters.dateRange.end;
+    filters.dateRange.end ||
+    nearbyFilter;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-32">
@@ -65,7 +109,10 @@ export function EventsFilters() {
         <div className="flex items-center gap-2">
           {hasActiveFilters && (
             <button
-              onClick={clearFilters}
+              onClick={() => {
+                setNearbyFilter(false);
+                clearFilters();
+              }}
               className="text-xs text-red-600 hover:text-red-700 font-medium"
             >
               Tout effacer
@@ -167,6 +214,32 @@ export function EventsFilters() {
               </select>
             </div>
           )}
+
+          {/* Filtre par proximité */}
+          <div>
+            <h4 className="font-medium text-gray-900 mb-3">Proximité</h4>
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="nearbyFilter"
+                checked={nearbyFilter}
+                onChange={(e) => handleNearbyFilterChange(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                disabled={geoLoading}
+              />
+              <label htmlFor="nearbyFilter" className="text-sm text-gray-800 cursor-pointer">
+                Autour de moi (10 km)
+              </label>
+              {geoLoading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              )}
+            </div>
+            {nearbyFilter && !position && (
+              <div className="mt-2 text-xs text-gray-500">
+                Géolocalisation requise pour cette fonctionnalité
+              </div>
+            )}
+          </div>
 
 
           {/* Filtre par date */}

@@ -247,6 +247,12 @@ export class MessageService {
         }
       },
       include: {
+        event: {
+          select: {
+            id: true,
+            title: true
+          }
+        },
         participants: {
           include: {
             user: {

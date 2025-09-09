@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         { 
           success: false,
           error: {
-            message: 'Invalid email or password',
+            message: 'Email ou mot de passe invalide',
             code: 'INVALID_CREDENTIALS'
           }
         },

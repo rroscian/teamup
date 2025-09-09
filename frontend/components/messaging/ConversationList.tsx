@@ -29,7 +29,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
   const getConversationTitle = (conversation: Conversation) => {
     if (conversation.type === 'event') {
-      return conversation.event?.title || 'Événement';
+      // Utiliser le nom de la conversation (qui contient le titre de l'événement)
+      // ou le titre de l'événement en fallback
+      return (conversation as any).name || conversation.event?.title || 'Événement';
     }
     const otherUser = getOtherParticipant(conversation);
     return otherUser?.username || 'Conversation';

@@ -30,7 +30,6 @@ interface WizardFormData {
   price: string;
   
   // Étape 5: Personnalisation
-  imageUrl: string;
   equipment: string[];
   newEquipment: string;
 }
@@ -65,7 +64,6 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
     postalCode: '',
     maxParticipants: '',
     price: '',
-    imageUrl: '',
     equipment: [],
     newEquipment: ''
   });
@@ -91,7 +89,6 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
         postalCode: event.location.postalCode || '',
         maxParticipants: (event as any).maxParticipants?.toString() || '',
         price: (event as any).price?.toString() || '',
-        imageUrl: event.imageUrl || '',
         equipment: (event as any).equipment || [],
         newEquipment: ''
       });
@@ -156,7 +153,6 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
       postalCode: '',
       maxParticipants: '10',
       price: '0',
-      imageUrl: '',
       equipment: [],
       newEquipment: ''
     });
@@ -245,6 +241,8 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
         date: eventDate,
         startDate: eventDate,
         endDate: eventDate,
+        startTime: '12:00', // Valeur par défaut
+        duration: 60, // Valeur par défaut en minutes
         location: {
           name: formData.locationName,
           address: formData.locationAddress || formData.locationName,
@@ -252,7 +250,6 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
           postalCode: formData.postalCode || '',
           type: 'outdoor' as const
         } as EventLocation,
-        imageUrl: formData.imageUrl || '',
         skillLevel: formData.skillLevel,
         level: formData.skillLevel,
         maxParticipants: formData.maxParticipants ? parseInt(formData.maxParticipants) : 10,
@@ -366,36 +363,38 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
           ))}
         </div>
 
-        {/* Version mobile */}
+        {/* Version mobile améliorée */}
         <div className="sm:hidden">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              {steps.map((step) => (
-                <div
-                  key={step.number}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    currentStep > step.number
-                      ? 'bg-green-500'
-                      : currentStep === step.number
-                      ? 'bg-blue-500'
-                      : isStepValid(step.number)
-                      ? 'bg-gray-300'
-                      : 'bg-gray-200'
-                  }`}
-                />
-              ))}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                {steps.map((step) => (
+                  <div
+                    key={step.number}
+                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                      currentStep > step.number
+                        ? 'bg-green-500 scale-110'
+                        : currentStep === step.number
+                        ? 'bg-blue-500 scale-125'
+                        : isStepValid(step.number)
+                        ? 'bg-gray-300'
+                        : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-sm font-medium text-gray-600">
+                Étape {currentStep} sur {steps.length}
+              </span>
             </div>
-            <span className="text-sm text-gray-500">
-              Étape {currentStep} sur {steps.length}
-            </span>
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {steps[currentStep - 1].title}
-            </h3>
-            <p className="text-sm text-gray-500 mt-1">
-              {steps[currentStep - 1].description}
-            </p>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                {steps[currentStep - 1].title}
+              </h3>
+              <p className="text-base text-gray-600">
+                {steps[currentStep - 1].description}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -433,10 +432,10 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
       )}
 
       {/* Contenu de l'étape */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-96">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 min-h-96">
         {/* Étape 1: Informations générales */}
         {currentStep === 1 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Informations générales
@@ -455,7 +454,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                 id="title"
                 value={formData.title}
                 onChange={(e) => updateFormData({ title: e.target.value })}
-                className="w-full px-4 py-3 border rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors border-gray-300"
+                className="w-full px-4 py-4 border rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors border-gray-300 shadow-sm"
                 placeholder="Ex: Tournoi de football du dimanche"
                 autoFocus
               />
@@ -470,7 +469,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                 rows={4}
                 value={formData.description}
                 onChange={(e) => updateFormData({ description: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                 placeholder="Décrivez votre événement, les règles, l'ambiance..."
               />
             </div>
@@ -479,7 +478,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
 
         {/* Étape 2: Sport et niveau */}
         {currentStep === 2 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Sport et niveau
@@ -559,7 +558,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
 
         {/* Étape 3: Date et lieu */}
         {currentStep === 3 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Date et lieu
@@ -579,7 +578,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   id="date"
                   value={formData.date}
                   onChange={(e) => updateFormData({ date: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                 />
               </div>
 
@@ -592,7 +591,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   id="time"
                   value={formData.time}
                   onChange={(e) => updateFormData({ time: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                 />
               </div>
             </div>
@@ -607,7 +606,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   id="locationName"
                   value={formData.locationName}
                   onChange={(e) => updateFormData({ locationName: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                   placeholder="Ex: Stade municipal, Complexe sportif Jean Moulin"
                 />
               </div>
@@ -621,7 +620,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   id="locationAddress"
                   value={formData.locationAddress}
                   onChange={(e) => updateFormData({ locationAddress: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                   placeholder="Ex: 15 rue du Sport"
                 />
               </div>
@@ -636,7 +635,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                     id="city"
                     value={formData.city}
                     onChange={(e) => updateFormData({ city: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                     placeholder="Ex: Paris"
                   />
                 </div>
@@ -650,7 +649,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                     id="postalCode"
                     value={formData.postalCode}
                     onChange={(e) => updateFormData({ postalCode: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                     placeholder="Ex: 75001"
                   />
                 </div>
@@ -661,7 +660,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
 
         {/* Étape 4: Participants */}
         {currentStep === 4 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Participants et prix
@@ -671,7 +670,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-4">
               <div>
                 <label htmlFor="maxParticipants" className="block text-sm font-medium text-gray-700 mb-2">
                   Nombre maximum de participants
@@ -682,7 +681,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   min="1"
                   value={formData.maxParticipants}
                   onChange={(e) => updateFormData({ maxParticipants: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                   placeholder="Ex: 20"
                 />
               </div>
@@ -698,7 +697,7 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   step="0.01"
                   value={formData.price}
                   onChange={(e) => updateFormData({ price: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full px-4 py-4 border border-gray-300 rounded-xl text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                   placeholder="0.00"
                 />
               </div>
@@ -717,36 +716,19 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
 
         {/* Étape 5: Personnalisation */}
         {currentStep === 5 && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Personnalisation
+                Équipement nécessaire
               </h3>
               <p className="text-gray-600 mb-6">
-                Ajoutez une image et précisez l'équipement nécessaire
+                Précisez l'équipement nécessaire pour l'événement
               </p>
             </div>
 
-
-            {/* Image */}
-            <div>
-              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                URL de l'image
-              </label>
-              <input
-                type="url"
-                id="imageUrl"
-                value={formData.imageUrl}
-                onChange={(e) => updateFormData({ imageUrl: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-base font-medium text-gray-900 bg-white placeholder:text-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-
-            {/* Équipement */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Équipement nécessaire
+                Liste d'équipements
               </label>
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.equipment.map((item) => (
@@ -765,19 +747,19 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   </span>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 items-stretch">
                 <input
                   type="text"
                   value={formData.newEquipment}
                   onChange={(e) => updateFormData({ newEquipment: e.target.value })}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEquipment())}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-base text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm"
                   placeholder="Ex: Chaussures de sport, bouteille d'eau..."
                 />
                 <button
                   type="button"
                   onClick={addEquipment}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  className="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors text-base font-medium shadow-sm"
                 >
                   Ajouter
                 </button>
@@ -1002,82 +984,138 @@ export function EventWizard({ event, onComplete }: EventWizardProps) {
                   ))}
                 </div>
               </div>
-              {formData.imageUrl && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={formData.imageUrl}
-                      alt="Aperçu"
-                      className="h-16 w-16 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                    <input
-                      type="url"
-                      value={formData.imageUrl}
-                      onChange={(e) => updateFormData({ imageUrl: e.target.value })}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="URL de l'image"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
       </div>
 
       {/* Navigation */}
-      <div className="mt-8 flex items-center justify-between">
-        <div>
-          {currentStep > 1 ? (
-            <button
-              type="button"
-              onClick={prevStep}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
-              Précédent
-            </button>
-          ) : (
-            <Link
-              href="/events"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
-              Retour aux événements
-            </Link>
-          )}
+      <div className="mt-8">
+        {/* Version mobile - Navigation verticale avec plus d'espacement */}
+        <div className="sm:hidden">
+          {/* Indicateur d'étape centré */}
+          <div className="text-center mb-6">
+            <div className="text-sm text-gray-500 mb-2">
+              Étape {currentStep} sur {steps.length}
+            </div>
+            {/* Barre de progression */}
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${(currentStep / steps.length) * 100}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* Boutons de navigation empilés avec espacement généreux */}
+          <div className="space-y-4">
+            {/* Bouton suivant/créer - priorité visuelle */}
+            {currentStep < 6 ? (
+              <button
+                type="button"
+                onClick={nextStep}
+                disabled={!isStepValid(currentStep)}
+                className="w-full flex items-center justify-center px-6 py-4 text-base font-semibold text-white bg-blue-600 border border-transparent rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                {currentStep === 5 ? 'Réviser mon événement' : 'Continuer'}
+                <ArrowRightIcon className="h-5 w-5 ml-3" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !isStepValid(6)}
+                className="w-full flex items-center justify-center px-6 py-4 text-base font-semibold text-white bg-green-600 border border-transparent rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Enregistrement...
+                  </>
+                ) : (
+                  <>
+                    {event ? 'Modifier l\'événement' : 'Créer mon événement'}
+                    <CheckIcon className="h-5 w-5 ml-3" />
+                  </>
+                )}
+              </button>
+            )}
+            
+            {/* Bouton précédent/retour */}
+            {currentStep > 1 ? (
+              <button
+                type="button"
+                onClick={prevStep}
+                className="w-full flex items-center justify-center px-6 py-3 text-base font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200"
+              >
+                <ArrowLeftIcon className="h-5 w-5 mr-3" />
+                Étape précédente
+              </button>
+            ) : (
+              <Link
+                href="/events"
+                className="w-full flex items-center justify-center px-6 py-3 text-base font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200"
+              >
+                <ArrowLeftIcon className="h-5 w-5 mr-3" />
+                Retour aux événements
+              </Link>
+            )}
+          </div>
         </div>
 
-        <div className="text-sm text-gray-500">
-          Étape {currentStep} sur {steps.length}
-        </div>
+        {/* Version desktop - Navigation horizontale */}
+        <div className="hidden sm:flex items-center justify-between">
+          <div>
+            {currentStep > 1 ? (
+              <button
+                type="button"
+                onClick={prevStep}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Précédent
+              </button>
+            ) : (
+              <Link
+                href="/events"
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Retour aux événements
+              </Link>
+            )}
+          </div>
 
-        <div>
-          {currentStep < 6 ? (
-            <button
-              type="button"
-              onClick={nextStep}
-              disabled={!isStepValid(currentStep)}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {currentStep === 5 ? 'Réviser' : 'Suivant'}
-              <ArrowRightIcon className="h-4 w-4 ml-2" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={isSubmitting || !isStepValid(6)}
-              className="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSubmitting ? 'Enregistrement...' : (event ? 'Modifier l\'événement' : 'Créer l\'événement')}
-              <CheckIcon className="h-4 w-4 ml-2" />
-            </button>
-          )}
+          <div className="text-sm text-gray-500">
+            Étape {currentStep} sur {steps.length}
+          </div>
+
+          <div>
+            {currentStep < 6 ? (
+              <button
+                type="button"
+                onClick={nextStep}
+                disabled={!isStepValid(currentStep)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {currentStep === 5 ? 'Réviser' : 'Suivant'}
+                <ArrowRightIcon className="h-4 w-4 ml-2" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting || !isStepValid(6)}
+                className="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isSubmitting ? 'Enregistrement...' : (event ? 'Modifier l\'événement' : 'Créer l\'événement')}
+                <CheckIcon className="h-4 w-4 ml-2" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

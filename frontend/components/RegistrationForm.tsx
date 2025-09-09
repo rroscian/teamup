@@ -54,7 +54,7 @@ export function RegistrationForm() {
     }
 
     try {
-      await register(formData.email, formData.password, formData.name);
+      await register(formData.email, formData.password, formData.name, formData.profile);
       // Redirect to profile or events page
       window.location.href = '/events';
     } catch (err) {

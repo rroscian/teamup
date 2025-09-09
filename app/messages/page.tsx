@@ -28,11 +28,19 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Messagerie</h1>
-        <div className="h-[calc(100vh-12rem)]">
-          <MessagingInterface />
+    <div className="min-h-screen bg-gray-50 pt-20 md:pt-20">
+      {/* Interface mobile full-screen */}
+      <div className="md:hidden h-[calc(100vh-5rem)]">
+        <MessagingInterface />
+      </div>
+      
+      {/* Interface desktop avec marges */}
+      <div className="hidden md:block">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Messagerie</h1>
+          <div className="h-[calc(100vh-12rem)]">
+            <MessagingInterface />
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { Event, EventStatus, Sport, SkillLevel, LocationType } from '@/shared/types';
 import { prisma } from '@/lib/prisma';
+import { GeocodingService } from './geocodingService';
 
 // Helper function to transform Prisma Event to shared Event type
 function transformPrismaEvent(prismaEvent: any): Event {
@@ -37,6 +38,8 @@ function transformPrismaEvent(prismaEvent: any): Event {
     level: prismaEvent.skillLevel?.[0] as SkillLevel || SkillLevel.Mixed,
     startDate: startDate,
     endDate: endDate,
+    startTime: prismaEvent.startTime || '12:00',
+    duration: prismaEvent.duration || 60,
     date: startDate,
     createdById: prismaEvent.creatorId,
     participants: prismaEvent.participants?.map((p: any) => ({
@@ -49,9 +52,10 @@ function transformPrismaEvent(prismaEvent: any): Event {
     createdAt: prismaEvent.createdAt,
     updatedAt: prismaEvent.updatedAt,
     status: getEventStatus(prismaEvent.status),
-    price: 0, // Not in current schema, defaulting to 0
-    equipment: [], // Not in current schema
-    skillLevel: prismaEvent.skillLevel || [SkillLevel.Mixed]
+    price: undefined, // Champ temporairement désactivé - migration Prisma requise
+    equipment: [], // Champ temporairement désactivé - migration Prisma requise
+    skillLevel: prismaEvent.skillLevel || [SkillLevel.Mixed],
+    coordinates: location.coordinates ? { lat: location.coordinates[0], lng: location.coordinates[1] } : undefined
   };
 }
 
@@ -77,6 +81,9 @@ export interface EventFilters {
   endDate?: Date;
   status?: EventStatus;
   maxPrice?: number;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
 }
 
 export interface CreateEventForm {
@@ -92,6 +99,13 @@ export interface CreateEventForm {
   price?: number;
   equipment?: string[];
   teamId?: string;
+  category?: 'sports' | 'social' | 'corporate';
+  type?: string;
+  skillLevel?: SkillLevel;
+  currentParticipants?: number;
+  createdById?: string;
+  participants?: any[];
+  status?: any;
 }
 
 export const eventServiceServer = {
@@ -189,6 +203,25 @@ export const eventServiceServer = {
       }
       if (filters?.maxPrice !== undefined) {
         events = events.filter(e => (e.price || 0) <= filters.maxPrice!);
+      }
+
+      // Filtrage géographique
+      if (filters?.latitude !== undefined && filters?.longitude !== undefined) {
+        const radius = filters.radius || 10; // 10 km par défaut
+        events = events.filter(event => {
+          if (!event.location.latitude || !event.location.longitude) {
+            return false; // Exclure les événements sans géolocalisation
+          }
+          
+          const distance = GeocodingService.calculateDistance(
+            filters.latitude!,
+            filters.longitude!,
+            event.location.latitude,
+            event.location.longitude
+          );
+          
+          return distance <= radius;
+        });
       }
 
       return events;
@@ -338,6 +371,8 @@ export const eventServiceServer = {
           minParticipants: data.minParticipants,
           skillLevel: [data.level],
           status: 'active',
+          // price: data.price || null, // Champ temporairement désactivé - migration Prisma requise
+          // equipment: data.equipment || [], // Champ temporairement désactivé - migration Prisma requise
           creatorId: validUserId,
           // Automatically add creator as participant
           participants: {
@@ -430,6 +465,8 @@ export const eventServiceServer = {
       if (data.startDate && data.endDate) {
         updateData.duration = Math.round((data.endDate.getTime() - data.startDate.getTime()) / (1000 * 60));
       }
+      // if (data.price !== undefined) updateData.price = data.price; // Champ temporairement désactivé - migration Prisma requise
+      // if (data.equipment !== undefined) updateData.equipment = data.equipment; // Champ temporairement désactivé - migration Prisma requise
 
       const prismaEvent = await prisma.event.update({
         where: { id },

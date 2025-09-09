@@ -45,6 +45,18 @@ export async function GET(request: NextRequest) {
       filters.endDate = new Date(endDate);
     }
     
+    // Géolocalisation
+    const latitude = searchParams.get('latitude');
+    const longitude = searchParams.get('longitude');
+    const radius = searchParams.get('radius');
+    if (latitude && longitude) {
+      filters.latitude = parseFloat(latitude);
+      filters.longitude = parseFloat(longitude);
+      if (radius) {
+        filters.radius = parseFloat(radius);
+      }
+    }
+    
     // Special endpoints
     const upcoming = searchParams.get('upcoming');
     if (upcoming === 'true') {

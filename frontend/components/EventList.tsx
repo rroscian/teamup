@@ -6,6 +6,8 @@ import { useEvents } from '@/frontend/hooks/useEvents';
 import { EventCard } from '@/frontend/components/EventCard';
 import { Button } from '@/frontend/components/Button';
 import { Input } from '@/frontend/components/Input';
+import { useGeolocation, calculateDistance } from '@/frontend/hooks/useGeolocation';
+import { useToast } from '@/frontend/contexts/ToastContext';
 
 interface EventListProps {
   city?: string;
@@ -29,7 +31,12 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
   const [filterSport, setFilterSport] = useState<Sport | ''>('');
   const [filterLevel, setFilterLevel] = useState<SkillLevel | ''>('');
   const [filterStatus, setFilterStatus] = useState<EventStatus | ''>('');
+  const [filterNearby, setFilterNearby] = useState(false);
   const [joinedEvents, setJoinedEvents] = useState<Set<string>>(new Set());
+  
+  // Géolocalisation
+  const { position, error: geoError, loading: geoLoading, requestPermission } = useGeolocation(false);
+  const { showWarning } = useToast();
 
   useEffect(() => {
     if (showUpcoming) {
@@ -41,14 +48,60 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
     }
   }, []);
 
-  const handleFilter = () => {
+  const handleFilter = async () => {
     const filters: any = {};
     if (filterCity) filters.city = filterCity;
     if (filterSport) filters.sport = filterSport;
     if (filterLevel) filters.level = filterLevel;
     if (filterStatus) filters.status = filterStatus;
 
+    // Si le filtre "Autour de moi" est activé
+    if (filterNearby) {
+      if (!position) {
+        // Demander la permission de géolocalisation
+        const permissionGranted = await requestPermission();
+        if (!permissionGranted || geoError) {
+          showWarning('Cette fonctionnalité n\'est disponible qu\'avec la géolocalisation activée.');
+          setFilterNearby(false);
+          return;
+        }
+        // Si on n'a toujours pas la position, on ne peut pas filtrer
+        if (!position) {
+          showWarning('Impossible d\'obtenir votre position. Veuillez réessayer.');
+          setFilterNearby(false);
+          return;
+        }
+      }
+      
+      // Ajouter les coordonnées utilisateur pour le filtrage côté serveur
+      filters.latitude = position.lat;
+      filters.longitude = position.lng;
+      filters.radius = 10; // 10 km
+    }
+
     fetchEvents(filters);
+  };
+
+  // Filtrage côté client si nécessaire (backup)
+  const filterEventsByDistance = (eventsToFilter: Event[]) => {
+    if (!filterNearby || !position) {
+      return eventsToFilter;
+    }
+
+    return eventsToFilter.filter(event => {
+      if (!event.location.latitude || !event.location.longitude) {
+        return false; // Exclure les événements sans géolocalisation
+      }
+      
+      const distance = calculateDistance(
+        position.lat,
+        position.lng,
+        event.location.latitude,
+        event.location.longitude
+      );
+      
+      return distance <= 10; // 10 km
+    });
   };
 
   const handleJoin = async (eventId: string) => {
@@ -100,7 +153,7 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
       <div className="bg-white p-4 rounded-lg shadow space-y-4">
         <h3 className="font-semibold text-lg">Filtrer les événements</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label className="block text-sm font-medium mb-1">Ville</label>
             <Input
@@ -169,6 +222,22 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
               <option value={EventStatus.Cancelled}>Annulé</option>
             </select>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Proximité</label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="filterNearby"
+                checked={filterNearby}
+                onChange={(e) => setFilterNearby(e.target.checked)}
+                className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
+              />
+              <label htmlFor="filterNearby" className="text-sm font-medium">
+                Autour de moi (10 km)
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -180,6 +249,7 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
               setFilterSport('');
               setFilterLevel('');
               setFilterStatus('');
+              setFilterNearby(false);
               fetchEvents();
             }}
           >
@@ -190,12 +260,30 @@ export function EventList({ city, sport, showUpcoming = false }: EventListProps)
 
       {/* Events Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.length === 0 ? (
+        {filterEventsByDistance(events).length === 0 ? (
           <div className="col-span-full text-center text-gray-500 py-8">
-            Aucun événement trouvé
+            {filterNearby && !position ? (
+              <div>
+                <p>Géolocalisation requise pour afficher les événements à proximité</p>
+                <Button 
+                  onClick={async () => {
+                    const permissionGranted = await requestPermission();
+                    if (permissionGranted && !geoError) {
+                      handleFilter();
+                    }
+                  }}
+                  className="mt-2"
+                  disabled={geoLoading}
+                >
+                  {geoLoading ? 'Localisation...' : 'Activer la géolocalisation'}
+                </Button>
+              </div>
+            ) : (
+              'Aucun événement trouvé'
+            )}
           </div>
         ) : (
-          events.map(event => (
+          filterEventsByDistance(events).map(event => (
             <EventCard
               key={event.id}
               event={event}

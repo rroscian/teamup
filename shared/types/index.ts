@@ -39,6 +39,12 @@ export interface UserSportProfile {
     messages: boolean;
     reminders: boolean;
   };
+  enableGeolocation?: boolean;
+  lastKnownPosition?: {
+    lat: number;
+    lng: number;
+    timestamp: string;
+  };
 }
 
 export interface SkillLevelBySport {
@@ -121,6 +127,8 @@ export interface Event {
   level: SkillLevel;
   startDate: Date;
   endDate: Date;
+  startTime: string;
+  duration: number;
   teamId?: string;
   createdById: string;
   participants: EventParticipant[];
@@ -136,6 +144,7 @@ export interface Event {
   imageUrl?: string;
   skillLevel?: SkillLevel; // Alias for level
   currentParticipants?: number;
+  coordinates?: { lat: number; lng: number };
 }
 
 export interface EventFilters {
@@ -146,6 +155,9 @@ export interface EventFilters {
   maxPrice?: number;
   startDate?: Date;
   endDate?: Date;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
 }
 
 export interface EventLocation {

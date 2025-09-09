@@ -167,20 +167,6 @@ export function EventCard({ event, variant = 'grid', onClick }: EventCardProps) 
       <Link href={`/events/${event.id}`} className="block">
         <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer group">
           <div className="flex items-start gap-6">
-            {/* Image ou placeholder */}
-            <div className="flex-shrink-0">
-              {event.imageUrl ? (
-                <img
-                  src={event.imageUrl}
-                  alt={event.title}
-                  className="w-24 h-24 object-cover rounded-lg"
-                />
-              ) : (
-                <div className="w-24 h-24 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
-                  {getEventTypeIcon()}
-                </div>
-              )}
-            </div>
 
             {/* Contenu principal */}
             <div className="flex-1 min-w-0">
@@ -224,32 +210,15 @@ export function EventCard({ event, variant = 'grid', onClick }: EventCardProps) 
   return (
     <Link href={`/events/${event.id}`} className="block">
       <div className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
-        {/* Image ou placeholder */}
-        <div className="aspect-video bg-gray-200 relative">
-          {event.imageUrl ? (
-            <img
-              src={event.imageUrl}
-              alt={event.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <div className="text-4xl">
-                {getEventTypeIcon()}
-              </div>
-            </div>
-          )}
-          
+
+        {/* Contenu */}
+        <div className="p-4 pt-6">
           {/* Badge catégorie */}
-          <div className="absolute top-3 right-3">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor()}`}>
+          <div className="mb-3">
+            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor()}`}>
               {event.category}
             </span>
           </div>
-        </div>
-
-        {/* Contenu */}
-        <div className="p-4">
           <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-1">
             {event.title}
           </h3>

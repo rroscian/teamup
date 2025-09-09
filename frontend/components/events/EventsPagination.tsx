@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useEvents } from '@/frontend/contexts/EventsContext';
+import { useIsMobile } from '@/frontend/hooks/useIsMobile';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export function EventsPagination() {
@@ -12,6 +13,7 @@ export function EventsPagination() {
     setCurrentPage, 
     setViewOptions 
   } = useEvents();
+  const isMobile = useIsMobile();
 
   const totalItems = filteredEvents.length;
   const totalPages = Math.ceil(totalItems / viewOptions.itemsPerPage);
@@ -36,9 +38,17 @@ export function EventsPagination() {
     setCurrentPage(newPage);
   };
 
+  // Options de pagination selon la plateforme
+  const getItemsPerPageOptions = () => {
+    if (isMobile) {
+      return [3, 6, 9];
+    }
+    return [25, 50, 75, 100];
+  };
+
   const generatePageNumbers = () => {
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = isMobile ? 3 : 5;
     
     if (totalPages <= maxVisiblePages) {
       // Afficher toutes les pages si peu nombreuses
@@ -85,64 +95,84 @@ export function EventsPagination() {
   }
 
   return (
-    <div className="bg-white border-t border-gray-200 px-4 py-3 sm:px-6">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className={`bg-white border-t border-gray-200 ${
+      isMobile ? 'px-4 py-4' : 'px-4 py-3 sm:px-6'
+    }`}>
+      <div className={`flex items-center justify-between ${
+        isMobile ? 'flex-col gap-4' : 'flex-col sm:flex-row gap-4'
+      }`}>
         {/* Informations sur les éléments */}
-        <div className="flex items-center gap-4">
-          <p className="text-sm text-gray-700">
+        <div className={`flex items-center ${
+          isMobile ? 'flex-col gap-3 text-center' : 'gap-4'
+        }`}>
+          <p className={`text-gray-700 ${
+            isMobile ? 'text-sm' : 'text-sm'
+          }`}>
             Affichage de <span className="font-medium">{startIndex}</span> à{' '}
             <span className="font-medium">{endIndex}</span> sur{' '}
             <span className="font-medium">{totalItems}</span> résultat{totalItems > 1 ? 's' : ''}
           </p>
           
           {/* Sélecteur d'éléments par page */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="items-per-page" className="text-sm text-gray-600">
-              Éléments par page:
-            </label>
-            <select
-              id="items-per-page"
-              value={viewOptions.itemsPerPage}
-              onChange={(e) => changeItemsPerPage(Number(e.target.value))}
-              className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value={12}>12</option>
-              <option value={24}>24</option>
-              <option value={48}>48</option>
-              <option value={96}>96</option>
-            </select>
-          </div>
+          {!isMobile && (
+            <div className="flex items-center gap-2">
+              <label htmlFor="items-per-page" className="text-sm text-gray-600">
+                Éléments par page:
+              </label>
+              <select
+                id="items-per-page"
+                value={viewOptions.itemsPerPage}
+                onChange={(e) => changeItemsPerPage(Number(e.target.value))}
+                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {getItemsPerPageOptions().map(option => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Navigation des pages */}
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center ${
+          isMobile ? 'justify-center gap-1' : 'gap-2'
+        }`}>
           {/* Bouton page précédente */}
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage <= 1}
-            className={`inline-flex items-center px-2 py-2 border rounded-md text-sm font-medium ${
+            className={`inline-flex items-center border rounded-xl font-medium transition-all ${
               currentPage <= 1
                 ? 'border-gray-300 text-gray-300 cursor-not-allowed'
                 : 'border-gray-300 text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700'
+            } ${
+              isMobile ? 'px-3 py-2 text-sm' : 'px-2 py-2 text-sm'
             }`}
           >
-            <ChevronLeftIcon className="h-5 w-5" />
+            <ChevronLeftIcon className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+            {isMobile && <span className="ml-1">Préc.</span>}
             <span className="sr-only">Page précédente</span>
           </button>
 
           {/* Numéros de page */}
-          <div className="flex items-center gap-1">
+          <div className={`flex items-center ${
+            isMobile ? 'gap-1' : 'gap-1'
+          }`}>
             {generatePageNumbers().map((page, index) => (
               <React.Fragment key={index}>
                 {page === '...' ? (
-                  <span className="px-3 py-2 text-gray-500">...</span>
+                  <span className={`text-gray-500 ${
+                    isMobile ? 'px-2 py-1' : 'px-3 py-2'
+                  }`}>...</span>
                 ) : (
                   <button
                     onClick={() => goToPage(page as number)}
-                    className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    className={`font-medium rounded-xl transition-all ${
                       currentPage === page
-                        ? 'bg-blue-600 text-white border border-blue-600'
+                        ? 'bg-blue-600 text-white border border-blue-600 shadow-lg'
                         : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    } ${
+                      isMobile ? 'px-3 py-2 text-sm' : 'px-3 py-2 text-sm'
                     }`}
                   >
                     {page}
@@ -156,45 +186,71 @@ export function EventsPagination() {
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className={`inline-flex items-center px-2 py-2 border rounded-md text-sm font-medium ${
+            className={`inline-flex items-center border rounded-xl font-medium transition-all ${
               currentPage >= totalPages
                 ? 'border-gray-300 text-gray-300 cursor-not-allowed'
                 : 'border-gray-300 text-gray-500 bg-white hover:bg-gray-50 hover:text-gray-700'
+            } ${
+              isMobile ? 'px-3 py-2 text-sm' : 'px-2 py-2 text-sm'
             }`}
           >
-            <ChevronRightIcon className="h-5 w-5" />
+            {isMobile && <span className="mr-1">Suiv.</span>}
+            <ChevronRightIcon className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
             <span className="sr-only">Page suivante</span>
           </button>
         </div>
       </div>
 
-      {/* Navigation rapide sur mobile */}
-      <div className="sm:hidden mt-4">
-        <div className="flex justify-center gap-2">
-          <button
-            onClick={() => goToPage(1)}
-            disabled={currentPage <= 1}
-            className={`px-3 py-1 text-xs rounded ${
-              currentPage <= 1
-                ? 'text-gray-400'
-                : 'text-blue-600 hover:text-blue-800'
-            }`}
-          >
-            Premier
-          </button>
-          <button
-            onClick={() => goToPage(totalPages)}
-            disabled={currentPage >= totalPages}
-            className={`px-3 py-1 text-xs rounded ${
-              currentPage >= totalPages
-                ? 'text-gray-400'
-                : 'text-blue-600 hover:text-blue-800'
-            }`}
-          >
-            Dernier
-          </button>
+      {/* Sélecteur d'éléments par page sur mobile */}
+      {isMobile && (
+        <div className="mt-4">
+          <div className="flex items-center justify-center gap-2">
+            <label htmlFor="mobile-items-per-page" className="text-sm text-gray-600">
+              Éléments par page:
+            </label>
+            <select
+              id="mobile-items-per-page"
+              value={viewOptions.itemsPerPage}
+              onChange={(e) => changeItemsPerPage(Number(e.target.value))}
+              className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              {getItemsPerPageOptions().map(option => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {/* Navigation rapide sur mobile */}
+      {isMobile && totalPages > 5 && (
+        <div className="mt-3">
+          <div className="flex justify-center gap-2">
+            <button
+              onClick={() => goToPage(1)}
+              disabled={currentPage <= 1}
+              className={`px-3 py-2 text-sm rounded-xl transition-colors ${
+                currentPage <= 1
+                  ? 'text-gray-400 bg-gray-100'
+                  : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+              }`}
+            >
+              Premier
+            </button>
+            <button
+              onClick={() => goToPage(totalPages)}
+              disabled={currentPage >= totalPages}
+              className={`px-3 py-2 text-sm rounded-xl transition-colors ${
+                currentPage >= totalPages
+                  ? 'text-gray-400 bg-gray-100'
+                  : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+              }`}
+            >
+              Dernier
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

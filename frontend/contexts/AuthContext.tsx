@@ -10,9 +10,9 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string, name: string) => Promise<User>;
+  register: (email: string, password: string, name: string, profile?: any) => Promise<User>;
   logout: () => void;
-  updateUserInfo: (userId: string, userData: Partial<Pick<User, 'name' | 'email'>>) => Promise<User>;
+  updateUserInfo: (userId: string, userData: Partial<Pick<User, 'name' | 'email'> & { bio?: string; location?: { city?: string; postalCode?: string } }>) => Promise<User>;
   checkAuthStatus: () => Promise<void>;
   getProfile: (userId: string) => Promise<any>;
   updateProfile: (userId: string, profileData: any) => Promise<void>;
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name: string): Promise<User> => {
+  const register = async (email: string, password: string, name: string, profile?: any): Promise<User> => {
     setLoading(true);
     setError(null);
 
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password, name })
+        body: JSON.stringify({ email, password, name, profile })
       });
 
       const result = await response.json();
@@ -148,18 +148,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.clear();
   };
 
-  const updateUserInfo = async (userId: string, userData: Partial<Pick<User, 'name' | 'email'>>): Promise<User> => {
+  const updateUserInfo = async (userId: string, userData: Partial<Pick<User, 'name' | 'email'> & { bio?: string; location?: { city?: string; postalCode?: string } }>): Promise<User> => {
     setError(null);
     
     try {
       const token = localStorage.getItem('authToken');
+      
+      // Séparer les données utilisateur de base et les données de profil
+      const { name, email, bio, location, ...rest } = userData;
+      const userUpdateData: any = { name, email, ...rest };
+      
+      // Si on a des données de profil, les inclure
+      if (bio !== undefined || location !== undefined) {
+        userUpdateData.profile = {};
+        if (bio !== undefined) userUpdateData.profile.bio = bio;
+        if (location !== undefined) userUpdateData.profile.location = location;
+      }
+      
       const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(userData)
+        body: JSON.stringify(userUpdateData)
       });
 
       const result = await response.json();

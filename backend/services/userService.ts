@@ -97,7 +97,7 @@ export class UserService {
     });
   }
 
-  static async updateProfile(id: string, profileData: Partial<UserSportProfile>): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
+  static async updateProfile(id: string, profileData: Partial<UserSportProfile & { enableGeolocation?: boolean; lastKnownPosition?: any }>): Promise<(PrismaUser & { profile: UserProfile | null }) | null> {
     const user = await this.findById(id);
     if (!user) {
       return null;
@@ -146,9 +146,15 @@ export class UserService {
       username: userData.name,
     };
 
-    // Gestion du profil avec préservation de l'avatar
-    if (userData.name || userData.avatar) {
+    // Gestion du profil avec préservation des données existantes
+    if (userData.name || userData.avatar || (userData as any).profile) {
       const existingAvatar = existingUser.profile?.avatar;
+      const existingBio = existingUser.profile?.bio || '';
+      const existingLocation = existingUser.profile?.location || {};
+      const existingSports = existingUser.profile?.sports || [];
+      const existingAvailability = existingUser.profile?.availability || [];
+      
+      const profileData = (userData as any).profile || {};
       
       updateData.profile = {
         upsert: {
@@ -156,17 +162,19 @@ export class UserService {
             firstName: userData.name?.split(' ')[0] || '',
             lastName: userData.name?.split(' ').slice(1).join(' ') || '',
             avatar: userData.avatar || existingAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.email || id}`,
-            bio: '',
-            location: {},
-            sports: [],
-            availability: []
+            bio: profileData.bio !== undefined ? profileData.bio : existingBio,
+            location: profileData.location !== undefined ? profileData.location : existingLocation,
+            sports: existingSports,
+            availability: existingAvailability
           },
           update: {
             ...(userData.name && {
               firstName: userData.name.split(' ')[0] || '',
               lastName: userData.name.split(' ').slice(1).join(' ') || '',
             }),
-            ...(userData.avatar !== undefined && { avatar: userData.avatar })
+            ...(userData.avatar !== undefined && { avatar: userData.avatar }),
+            ...(profileData.bio !== undefined && { bio: profileData.bio }),
+            ...(profileData.location !== undefined && { location: profileData.location })
           }
         }
       };

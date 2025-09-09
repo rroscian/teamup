@@ -45,6 +45,9 @@ export interface EventFilters {
     end?: Date;
   };
   location: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
 }
 
 // Types pour les options d'affichage
@@ -59,6 +62,7 @@ export interface ViewOptions {
 interface EventsContextType {
   // Données
   events: Event[];
+  nearbyEvents: EventWithDistance[];
   loading: boolean;
   error: string | null;
   
@@ -83,6 +87,15 @@ interface EventsContextType {
   currentPage: number;
   setCurrentPage: (page: number) => void;
   refreshEvents: () => void;
+  loadNearbyEvents: (lat?: number, lng?: number, radius?: number) => Promise<void>;
+  userPosition: { lat: number; lng: number } | null;
+}
+
+// Event avec distance
+export interface EventWithDistance extends Event {
+  distance?: number;
+  distanceFormatted?: string;
+  coordinates?: { lat: number; lng: number };
 }
 
 // Valeurs par défaut
@@ -95,11 +108,18 @@ const defaultFilters: EventFilters = {
   location: ''
 };
 
+const getDefaultItemsPerPage = () => {
+  if (typeof window !== 'undefined') {
+    return window.innerWidth < 768 ? 3 : 25;
+  }
+  return 25; // Défaut côté serveur
+};
+
 const defaultViewOptions: ViewOptions = {
   layout: 'grid',
   sortBy: 'date',
   sortOrder: 'asc',
-  itemsPerPage: 12
+  itemsPerPage: getDefaultItemsPerPage()
 };
 
 // Création du contexte
@@ -109,10 +129,34 @@ const EventsContext = createContext<EventsContextType | undefined>(undefined);
 export function EventsProvider({ children }: { children: ReactNode }) {
   // États
   const [events, setEvents] = useState<Event[]>([]);
+  const [nearbyEvents, setNearbyEvents] = useState<EventWithDistance[]>([]);
+  const [userPosition, setUserPosition] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFiltersState] = useState<EventFilters>(defaultFilters);
   const [viewOptions, setViewOptionsState] = useState<ViewOptions>(defaultViewOptions);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // Détecter les changements de taille d'écran pour ajuster la pagination
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // Ajuster automatiquement itemsPerPage si nécessaire
+      const newItemsPerPage = mobile ? 3 : 25;
+      if (viewOptions.itemsPerPage !== newItemsPerPage) {
+        setViewOptionsState(prev => ({
+          ...prev,
+          itemsPerPage: newItemsPerPage
+        }));
+      }
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, [viewOptions.itemsPerPage]);
   const [currentPage, setCurrentPage] = useState(1);
   
   const { user, isAuthenticated } = useAuth();
@@ -135,10 +179,38 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Gestion des filtres
+  const loadEventsWithFilters = async (filters: EventFilters) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const eventList = await eventService.getEvents({
+        sport: filters.sport,
+        level: filters.level,
+        maxPrice: filters.maxPrice,
+        startDate: filters.dateRange.start,
+        endDate: filters.dateRange.end,
+        latitude: filters.latitude,
+        longitude: filters.longitude,
+        radius: filters.radius,
+        city: filters.location
+      });
+      setEvents(eventList);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des événements');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gestion des filtres avec support de la géolocalisation
   const setFilters = (newFilters: Partial<EventFilters>) => {
     setFiltersState(prev => ({ ...prev, ...newFilters }));
     setCurrentPage(1); // Reset à la première page lors du changement de filtre
+    
+    // Si filtres géographiques appliqués, refetch les événements avec ces paramètres
+    if (newFilters.latitude && newFilters.longitude) {
+      loadEventsWithFilters({ ...filters, ...newFilters });
+    }
   };
 
   const clearFilters = () => {
@@ -269,7 +341,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
   // Actions CRUD
   const addEvent = async (newEvent: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      // Créer l'événement via l'API
+      // Créer l'événement via l'API avec toutes les données
       const createdEvent = await eventService.createEvent({
         title: newEvent.title,
         description: newEvent.description,
@@ -282,6 +354,14 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         endDate: newEvent.endDate,
         price: newEvent.price,
         equipment: newEvent.equipment || [],
+        // Nouvelles données ajoutées
+        category: newEvent.category,
+        type: newEvent.type,
+        skillLevel: newEvent.skillLevel,
+        currentParticipants: newEvent.currentParticipants,
+        createdById: newEvent.createdById,
+        participants: newEvent.participants,
+        status: newEvent.status
       });
 
       // Ajouter l'événement créé à la liste locale
@@ -312,10 +392,53 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     loadEvents();
   };
 
+  // Charger les événements proches
+  const loadNearbyEvents = async (lat?: number, lng?: number, radius: number = 10) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      let url = '/api/events/nearby?';
+      
+      if (lat && lng) {
+        url += `lat=${lat}&lng=${lng}&radius=${radius}`;
+        setUserPosition({ lat, lng });
+      } else {
+        // Utiliser la position de l'utilisateur stockée
+        url += `radius=${radius}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to load nearby events');
+      }
+      
+      const nearbyData = await response.json();
+      
+      // Transformer les dates
+      const transformedEvents = nearbyData.map((event: any) => ({
+        ...event,
+        startDate: new Date(event.date || event.startDate),
+        endDate: new Date(event.endDate || event.date),
+        date: new Date(event.date),
+        createdAt: new Date(event.createdAt),
+        updatedAt: new Date(event.updatedAt)
+      }));
+      
+      setNearbyEvents(transformedEvents);
+    } catch (error) {
+      console.error('Error loading nearby events:', error);
+    }
+  };
+
   // Valeur du contexte
   const contextValue: EventsContextType = {
     // Données
     events,
+    nearbyEvents,
     loading,
     error,
     
@@ -339,7 +462,9 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     totalPages,
     currentPage,
     setCurrentPage,
-    refreshEvents
+    refreshEvents,
+    loadNearbyEvents,
+    userPosition
   };
 
   return (
