@@ -118,21 +118,14 @@ export class UserService {
     if (profileData.enableGeolocation !== undefined) {
       baseProfileData.enableGeolocation = profileData.enableGeolocation;
       
-      // Logging pour le tracking des préférences de géolocalisation
-      console.log(`📍 Geolocation preference updated for user ${id}: ${profileData.enableGeolocation ? 'ENABLED' : 'DISABLED'} at ${new Date().toISOString()}`);
-      
       // Si on désactive la géolocalisation, vider la position
       if (!profileData.enableGeolocation) {
         baseProfileData.lastKnownPosition = null;
-        console.log(`🗑️ Cleared last known position for user ${id}`);
       }
     }
     
     if (profileData.lastKnownPosition !== undefined) {
       baseProfileData.lastKnownPosition = profileData.lastKnownPosition as any;
-      if (profileData.lastKnownPosition) {
-        console.log(`🌍 Position updated for user ${id}: lat=${profileData.lastKnownPosition.lat}, lng=${profileData.lastKnownPosition.lng} at ${profileData.lastKnownPosition.timestamp}`);
-      }
     }
 
     // Update or create profile

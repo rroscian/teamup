@@ -1,0 +1,14 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="512" height="512" rx="64" fill="url(#grad)"/>
+    <circle cx="256" cy="232.72727272727272" r="128" fill="white" opacity="0.9"/>
+    <rect x="204.8" y="284.44444444444446" width="102.4" height="51.2" fill="white" opacity="0.9" rx="12.8"/>
+    <rect x="232.72727272727272" y="320" width="51.2" height="64" fill="white" opacity="0.9" rx="6.4"/>
+    <rect x="284.44444444444446" y="320" width="51.2" height="64" fill="white" opacity="0.9" rx="6.4"/>
+    <text x="256" y="409.6" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="42.666666666666664" font-weight="bold">TeamUp</text>
+  </svg>

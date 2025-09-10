@@ -6,7 +6,6 @@ import { requireAuth } from '@/lib/auth-server';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    console.log('🔍 API Events: GET request avec params:', Object.fromEntries(searchParams.entries()));
     
     // Parse filters from query params
     const filters: EventFilters = {};
@@ -98,12 +97,10 @@ export async function GET(request: NextRequest) {
           endDate: filters.endDate
         }
       );
-      console.log('📦 API Events: Événements proches retournés:', nearbyEvents.length);
       return NextResponse.json(nearbyEvents);
     } else {
       // Sinon, utiliser getEvents normal
       const events = await eventServiceServer.getEvents(filters);
-      console.log('📦 API Events: Événements retournés:', events.length);
       return NextResponse.json(events);
     }
   } catch (error) {

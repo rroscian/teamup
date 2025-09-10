@@ -222,7 +222,6 @@ export const eventServiceServer = {
           }
           return hasGeo;
         });
-        console.log('📍 Backend: Événements avec géolocalisation:', eventsWithGeo.length);
         
         const nearbyEvents = eventsWithGeo.filter(event => {
           const distance = GeocodingService.calculateDistance(
@@ -238,7 +237,6 @@ export const eventServiceServer = {
           return isNearby;
         });
         
-        console.log('✅ Backend: Événements dans le rayon:', nearbyEvents.length);
         events = nearbyEvents;
       }
 
@@ -312,34 +310,18 @@ export const eventServiceServer = {
 
   // Géocoder et enrichir les événements avec coordonnées GPS
   async enrichEventsWithCoordinates(events: Event[]): Promise<Event[]> {
-    console.log(`\n🔍 DEBUG: ANALYSE DE TOUS LES ÉVÉNEMENTS:`);
-    
-    // Debug pour TOUS les événements
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i];
-      console.log(`\n📋 Événement ${i + 1}/${events.length}: "${event.title}"`);
-      console.log(`   📍 VILLE: ${event.location.city || 'AUCUNE'}`);
-      console.log(`   📐 LATITUDE: ${event.location.latitude || 'AUCUNE'}`);
-      console.log(`   📐 LONGITUDE: ${event.location.longitude || 'AUCUNE'}`);
-    }
-
     const eventsToGeocode = events.filter(event => 
       (!event.location.latitude || !event.location.longitude) && 
       event.location.city  // Seulement besoin de la ville
     );
 
     if (eventsToGeocode.length === 0) {
-      console.log(`✅ Tous les événements sont déjà géocodés`);
       return events;
     }
-
-    console.log(`\n🌍 GÉOCODAGE DE ${eventsToGeocode.length} ÉVÉNEMENTS SANS COORDONNÉES...`);
 
     // Géocoder les événements sans coordonnées - UTILISER UNIQUEMENT LE NOM DE VILLE
     const geocodingPromises = eventsToGeocode.map(async (event) => {
       try {
-        console.log(`🎯 Géocodage VILLE UNIQUEMENT: "${event.location.city}"`);
-        
         // UNIQUEMENT le nom de ville, pas d'adresse ni code postal
         const coords = await GeocodingService.geocodeAddress(
           '',  // Pas d'adresse
@@ -367,9 +349,7 @@ export const eventServiceServer = {
           event.location.longitude = coords.lng;
           event.coordinates = { lat: coords.lat, lng: coords.lng };
 
-          console.log(`✅ GÉOCODÉ: ${event.title} (${event.location.city}) -> ${coords.lat}, ${coords.lng}`);
         } else {
-          console.log(`❌ ÉCHEC GÉOCODAGE: ${event.title} (${event.location.city})`);
         }
       } catch (error) {
         console.error(`❌ ERREUR GÉOCODAGE: ${event.title} (${event.location.city}):`, error);
@@ -378,11 +358,6 @@ export const eventServiceServer = {
 
     await Promise.all(geocodingPromises);
     
-    console.log(`\n🔍 RÉSULTAT FINAL - ANALYSE DE TOUS LES ÉVÉNEMENTS APRÈS GÉOCODAGE:`);
-    for (let i = 0; i < events.length; i++) {
-      const event = events[i];
-      console.log(`📋 ${i + 1}. "${event.title}" - VILLE: ${event.location.city || 'AUCUNE'} - COORDS: ${event.location.latitude || 'AUCUNE'}, ${event.location.longitude || 'AUCUNE'}`);
-    }
     
     return events;
   },
@@ -394,34 +369,15 @@ export const eventServiceServer = {
     userLongitude: number, 
     radiusKm: number
   ): Promise<(Event & { distance: number; coordinates: { lat: number; lng: number } })[]> {
-    console.log(`🌍 Backend: Filtrage géographique activé`, { 
-      userLat: userLatitude, 
-      userLng: userLongitude, 
-      radius: radiusKm,
-      totalEvents: events.length
-    });
 
     const nearbyEvents: (Event & { distance: number; coordinates: { lat: number; lng: number } })[] = [];
 
-    console.log(`\n🔍 DEBUG: Analyse détaillée des coordonnées de chaque événement:`);
     
     for (let i = 0; i < events.length; i++) {
       const event = events[i];
       let eventLat: number | null = null;
       let eventLng: number | null = null;
 
-      // Debug détaillé pour chaque événement
-      console.log(`\n📋 Événement ${i + 1}/${events.length}: "${event.title}"`);
-      console.log(`   📍 Ville: ${event.location.city || 'N/A'}`);
-      console.log(`   🏠 Adresse: ${event.location.address || 'N/A'}`);
-      console.log(`   📦 Location object:`, JSON.stringify(event.location, null, 2));
-      
-      // Vérifier différents formats de coordonnées
-      console.log(`   🎯 Coordonnées dans location:`);
-      console.log(`      - latitude: ${event.location.latitude} (type: ${typeof event.location.latitude})`);
-      console.log(`      - longitude: ${event.location.longitude} (type: ${typeof event.location.longitude})`);
-      console.log(`      - lat: ${(event.location as any).lat} (type: ${typeof (event.location as any).lat})`);
-      console.log(`      - lng: ${(event.location as any).lng} (type: ${typeof (event.location as any).lng})`);
 
       // Vérifier si l'événement a des coordonnées
       if (event.location.latitude && event.location.longitude) {
@@ -432,7 +388,6 @@ export const eventServiceServer = {
           ? parseFloat(event.location.longitude) 
           : event.location.longitude;
           
-        console.log(`   ✅ Coordonnées trouvées: ${eventLat}, ${eventLng}`);
       } else if ((event.location as any).lat && (event.location as any).lng) {
         // Fallback pour format alternatif
         eventLat = typeof (event.location as any).lat === 'string' 
@@ -442,16 +397,13 @@ export const eventServiceServer = {
           ? parseFloat((event.location as any).lng) 
           : (event.location as any).lng;
           
-        console.log(`   ✅ Coordonnées trouvées (format alternatif): ${eventLat}, ${eventLng}`);
       } else {
-        console.log(`   ❌ Aucune coordonnée trouvée pour: ${event.title}`);
         continue;
       }
 
       // Vérifier que les coordonnées sont valides
       if (eventLat === null || eventLng === null || isNaN(eventLat) || isNaN(eventLng)) {
-        console.log(`   ⚠️  Coordonnées invalides (null ou NaN) pour: ${event.title}`);
-        continue;
+          continue;
       }
 
       // Calculer la distance
@@ -462,24 +414,18 @@ export const eventServiceServer = {
         eventLng
       );
 
-      console.log(`   📏 Distance calculée: ${distance.toFixed(2)}km`);
 
       // Vérifier si dans le rayon
       if (distance <= radiusKm) {
-        console.log(`   ✅ Dans le rayon (${radiusKm}km) - AJOUTÉ`);
         nearbyEvents.push({
           ...event,
           distance: Math.round(distance * 100) / 100, // Arrondir à 2 décimales
           coordinates: { lat: eventLat, lng: eventLng }
         });
       } else {
-        console.log(`   ❌ Hors rayon (${radiusKm}km) - distance: ${distance.toFixed(2)}km`);
       }
     }
 
-    console.log(`\n📊 RÉSUMÉ:`);
-    console.log(`📍 Backend: Total événements analysés: ${events.length}`);
-    console.log(`✅ Backend: Événements dans le rayon: ${nearbyEvents.length}`);
 
     // Trier par distance croissante
     nearbyEvents.sort((a, b) => a.distance - b.distance);
@@ -495,11 +441,9 @@ export const eventServiceServer = {
     additionalFilters?: Omit<EventFilters, 'latitude' | 'longitude' | 'radius'>
   ): Promise<Array<Event & { distance: number }>> {
     try {
-      console.log(`🎯 Recherche d'événements proches de ${userLatitude}, ${userLongitude} (${radiusKm}km)`);
-      
+        
       // 1. Récupérer tous les événements avec filtres de base
       let events = await this.getEvents(additionalFilters);
-      console.log(`📋 ${events.length} événements récupérés`);
 
       // 2. Enrichir avec coordonnées GPS si nécessaire
       events = await this.enrichEventsWithCoordinates(events);
@@ -556,12 +500,10 @@ export const eventServiceServer = {
             
             successCount++;
             details.push(`✅ ${event.title}: ${coords.lat}, ${coords.lng}`);
-            console.log(`✅ Re-géocodé: ${event.title} -> ${coords.lat}, ${coords.lng}`);
           } else {
             failedCount++;
             details.push(`❌ ${event.title}: Géocodage échoué`);
-            console.log(`❌ Échec re-géocodage: ${event.title}`);
-          }
+            }
         } catch (error) {
           failedCount++;
           details.push(`❌ ${event.title}: Erreur - ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
@@ -593,7 +535,6 @@ export const eventServiceServer = {
     
     for (const city of testCities) {
       try {
-        console.log(`🔍 Test géocodage: ${city}`);
         const coords = await GeocodingService.geocodeAddress('', city, '', 'France');
         
         if (coords) {
@@ -601,13 +542,11 @@ export const eventServiceServer = {
             success: true,
             coords: coords
           };
-          console.log(`✅ ${city}: ${coords.lat}, ${coords.lng}`);
         } else {
           results[city] = {
             success: false,
             error: 'Aucune coordonnée trouvée'
           };
-          console.log(`❌ ${city}: Aucune coordonnée trouvée`);
         }
         
         // Délai pour éviter de surcharger l'API
@@ -691,7 +630,6 @@ export const eventServiceServer = {
       // Géocoder automatiquement la localisation si nécessaire
       let locationData = data.location;
       if (data.location.city && (!data.location.latitude || !data.location.longitude)) {
-        console.log(`🌍 GÉOCODAGE AUTOMATIQUE VILLE UNIQUEMENT: "${data.location.city}"`);
         
         // UTILISER UNIQUEMENT LE NOM DE VILLE
         const coords = await GeocodingService.geocodeAddress(
@@ -706,9 +644,7 @@ export const eventServiceServer = {
             latitude: coords.lat,
             longitude: coords.lng
           };
-          console.log(`✅ ÉVÉNEMENT GÉOCODÉ: "${data.location.city}" -> ${coords.lat}, ${coords.lng}`);
         } else {
-          console.log(`❌ GÉOCODAGE ÉCHOUÉ POUR: "${data.location.city}"`);
         }
       }
 

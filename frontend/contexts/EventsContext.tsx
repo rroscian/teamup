@@ -197,9 +197,7 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         city: filters.location
       };
       
-      console.log('🔗 EventsContext: Appel API avec:', apiFilters);
       const eventList = await eventService.getEvents(apiFilters);
-      console.log('📦 EventsContext: Événements reçus:', eventList.length);
       setEvents(eventList);
     } catch (err) {
       console.error('❌ EventsContext: Erreur loadEventsWithFilters:', err);
@@ -211,7 +209,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   // Gestion des filtres avec support de la géolocalisation
   const setFilters = (newFilters: Partial<EventFilters>) => {
-    console.log('🔄 EventsContext: setFilters appelé avec:', newFilters);
     
     const updatedFilters = { ...filters, ...newFilters };
     setFiltersState(updatedFilters);
@@ -219,7 +216,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     
     // Si filtres géographiques appliqués, refetch les événements avec ces paramètres
     if (newFilters.latitude && newFilters.longitude) {
-      console.log('🌍 EventsContext: Filtres géographiques détectés, rechargement avec filtres...');
       loadEventsWithFilters(updatedFilters);
     }
   };

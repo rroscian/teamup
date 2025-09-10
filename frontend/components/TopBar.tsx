@@ -27,11 +27,9 @@ export function TopBar() {
     }
   }, [currentAvatarUrl, previousAvatarUrl, user?.name, user?.updatedAt]);
 
-  // Force auth check only when component mounts
+  // Force auth check when component mounts
   useEffect(() => {
-    if (isAuthenticated && user) {
-      checkAuthStatus();
-    }
+    checkAuthStatus();
   }, []);
 
   // Listen for profile update events

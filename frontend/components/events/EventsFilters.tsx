@@ -64,42 +64,20 @@ export function EventsFilters() {
     setNearbyFilter(checked);
     
     if (checked) {
-      console.log('🌍 Début test géolocalisation...');
-      
       if (!navigator.geolocation) {
-        console.log('❌ Navigator.geolocation non disponible');
         showWarning('Géolocalisation non supportée');
         setNearbyFilter(false);
         return;
       }
-      
-      console.log('📍 Appel getCurrentPosition...');
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          console.log('✅ Position reçue:', {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy
-          });
-          
-          console.log('🎯 Application des filtres...');
           setFilters({ 
             latitude: pos.coords.latitude, 
             longitude: pos.coords.longitude, 
             radius: 10 
           });
-          
-          console.log('✅ Filtres appliqués avec succès');
         },
         (error) => {
-          console.error('❌ Erreur géolocalisation:', {
-            code: error.code,
-            message: error.message,
-            PERMISSION_DENIED: error.code === 1,
-            POSITION_UNAVAILABLE: error.code === 2,
-            TIMEOUT: error.code === 3
-          });
-          
           let message = '';
           switch(error.code) {
             case 1:
@@ -119,13 +97,12 @@ export function EventsFilters() {
           setNearbyFilter(false);
         },
         {
-          enableHighAccuracy: false,
+          enableHighAccuracy: true,
           timeout: 15000,
           maximumAge: 60000
         }
       );
     } else {
-      console.log('🚫 Suppression des filtres géographiques');
       setFilters({ 
         latitude: undefined, 
         longitude: undefined, 
