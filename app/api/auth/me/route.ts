@@ -37,7 +37,13 @@ export async function GET(request: NextRequest) {
           events: true,
           messages: true,
           reminders: true
-        }
+        },
+        enableGeolocation: user.profile.enableGeolocation || false,
+        lastKnownPosition: user.profile.lastKnownPosition ? {
+          lat: (user.profile.lastKnownPosition as { lat: number; lng: number; timestamp: string }).lat,
+          lng: (user.profile.lastKnownPosition as { lat: number; lng: number; timestamp: string }).lng,
+          timestamp: (user.profile.lastKnownPosition as { lat: number; lng: number; timestamp: string }).timestamp
+        } : undefined
       } : undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt

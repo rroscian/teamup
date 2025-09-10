@@ -63,7 +63,7 @@ export default function GeolocationSettings({
           // Donner un feedback immédiat
           setTimeout(() => {
             if (!permissionGranted && isRequesting) {
-              console.log('Demande d\'autorisation en cours...');
+              // Feedback visuel déjà fourni par l'état isRequesting
             }
           }, 1000);
           
@@ -198,7 +198,7 @@ export default function GeolocationSettings({
                 <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-gray-600">
                   La géolocalisation est désactivée. Vous ne verrez pas les distances 
-                  jusqu\'aux événements et les suggestions basées sur votre position.
+                  jusqu'aux événements et les suggestions basées sur votre position.
                 </p>
               </div>
             )}

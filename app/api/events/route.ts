@@ -6,6 +6,7 @@ import { requireAuth } from '@/lib/auth-server';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
+    console.log('🔍 API Events: GET request avec params:', Object.fromEntries(searchParams.entries()));
     
     // Parse filters from query params
     const filters: EventFilters = {};
@@ -49,12 +50,18 @@ export async function GET(request: NextRequest) {
     const latitude = searchParams.get('latitude');
     const longitude = searchParams.get('longitude');
     const radius = searchParams.get('radius');
+    console.log('🌍 API Events: Paramètres géo reçus:', { latitude, longitude, radius });
     if (latitude && longitude) {
       filters.latitude = parseFloat(latitude);
       filters.longitude = parseFloat(longitude);
       if (radius) {
         filters.radius = parseFloat(radius);
       }
+      console.log('✅ API Events: Filtres géo parsés:', { 
+        latitude: filters.latitude, 
+        longitude: filters.longitude, 
+        radius: filters.radius 
+      });
     }
     
     // Special endpoints
@@ -73,9 +80,32 @@ export async function GET(request: NextRequest) {
     }
     
     // Get events with filters
-    const events = await eventServiceServer.getEvents(filters);
+    console.log('📋 API Events: Filtres finaux envoyés au service:', filters);
     
-    return NextResponse.json(events);
+    // Si coordonnées géographiques fournies, utiliser findNearbyEvents
+    if (filters.latitude && filters.longitude) {
+      console.log('🎯 API Events: Utilisation de findNearbyEvents avec géolocalisation');
+      const nearbyEvents = await eventServiceServer.findNearbyEvents(
+        filters.latitude,
+        filters.longitude,
+        filters.radius || 10,
+        {
+          sport: filters.sport,
+          level: filters.level,
+          city: filters.city,
+          status: filters.status,
+          startDate: filters.startDate,
+          endDate: filters.endDate
+        }
+      );
+      console.log('📦 API Events: Événements proches retournés:', nearbyEvents.length);
+      return NextResponse.json(nearbyEvents);
+    } else {
+      // Sinon, utiliser getEvents normal
+      const events = await eventServiceServer.getEvents(filters);
+      console.log('📦 API Events: Événements retournés:', events.length);
+      return NextResponse.json(events);
+    }
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json(

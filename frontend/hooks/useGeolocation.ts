@@ -121,7 +121,6 @@ export function useGeolocation(
       const geoError = error as GeolocationPositionError;
       // Pour les timeouts, ne pas considérer comme une erreur fatale
       if (geoError.code === 3) {
-        console.log('Timeout lors de la demande de permission, mais la géolocalisation continue en arrière-plan');
         return true; // Considérer comme succès pour éviter de bloquer l'utilisateur
       }
       setError(geoError);

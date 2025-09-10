@@ -181,9 +181,11 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const loadEventsWithFilters = async (filters: EventFilters) => {
     try {
+      console.log('📡 EventsContext: loadEventsWithFilters avec filtres:', filters);
       setLoading(true);
       setError(null);
-      const eventList = await eventService.getEvents({
+      
+      const apiFilters = {
         sport: filters.sport,
         level: filters.level,
         maxPrice: filters.maxPrice,
@@ -193,9 +195,14 @@ export function EventsProvider({ children }: { children: ReactNode }) {
         longitude: filters.longitude,
         radius: filters.radius,
         city: filters.location
-      });
+      };
+      
+      console.log('🔗 EventsContext: Appel API avec:', apiFilters);
+      const eventList = await eventService.getEvents(apiFilters);
+      console.log('📦 EventsContext: Événements reçus:', eventList.length);
       setEvents(eventList);
     } catch (err) {
+      console.error('❌ EventsContext: Erreur loadEventsWithFilters:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement des événements');
     } finally {
       setLoading(false);
@@ -204,12 +211,16 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   // Gestion des filtres avec support de la géolocalisation
   const setFilters = (newFilters: Partial<EventFilters>) => {
-    setFiltersState(prev => ({ ...prev, ...newFilters }));
+    console.log('🔄 EventsContext: setFilters appelé avec:', newFilters);
+    
+    const updatedFilters = { ...filters, ...newFilters };
+    setFiltersState(updatedFilters);
     setCurrentPage(1); // Reset à la première page lors du changement de filtre
     
     // Si filtres géographiques appliqués, refetch les événements avec ces paramètres
     if (newFilters.latitude && newFilters.longitude) {
-      loadEventsWithFilters({ ...filters, ...newFilters });
+      console.log('🌍 EventsContext: Filtres géographiques détectés, rechargement avec filtres...');
+      loadEventsWithFilters(updatedFilters);
     }
   };
 

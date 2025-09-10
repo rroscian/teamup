@@ -20,17 +20,7 @@ export function TopBar() {
   const [previousAvatarUrl, setPreviousAvatarUrl] = useState<string | undefined>();
   
   useEffect(() => {
-    console.log('TopBar Avatar Debug:', {
-      currentAvatarUrl,
-      previousAvatarUrl,
-      userProfile: user?.profile,
-      userAvatar: user?.avatar,
-      userName: user?.name,
-      userUpdatedAt: user?.updatedAt
-    });
-    
     if (currentAvatarUrl !== previousAvatarUrl && currentAvatarUrl) {
-      console.log('TopBar: Changing avatar URL from', previousAvatarUrl, 'to', currentAvatarUrl);
       setImageLoaded(false);
       setImageError(false);
       setPreviousAvatarUrl(currentAvatarUrl);
@@ -47,10 +37,7 @@ export function TopBar() {
   // Listen for profile update events
   useEffect(() => {
     const handleProfileUpdate = () => {
-      console.log('TopBar: Received userProfileUpdated event');
       // Don't reset image states - let the URL change detection handle it
-      // setImageLoaded(false);
-      // setImageError(false);
     };
 
     window.addEventListener('userProfileUpdated', handleProfileUpdate);
@@ -123,18 +110,15 @@ export function TopBar() {
                                 priority
                                 unoptimized
                                 onLoad={() => {
-                                  console.log('TopBar: Image loaded successfully', avatarUrl);
                                   setImageLoaded(true);
                                 }}
-                                onError={(e) => {
-                                  console.log('TopBar: Image failed to load', avatarUrl, e);
+                                onError={() => {
                                   setImageError(true);
                                 }}
                               />
                             </>
                           );
                         } else {
-                          console.log('TopBar: No valid avatar, showing fallback icon', { avatarUrl, imageError, user });
                           return <User className="w-4 h-4 text-[#00A8CC]" />;
                         }
                       })()}

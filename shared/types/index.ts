@@ -22,6 +22,12 @@ export interface UserProfile {
   sports?: string[];
   skillLevel?: string;
   availability?: string[];
+  enableGeolocation?: boolean;
+  lastKnownPosition?: {
+    lat: number;
+    lng: number;
+    timestamp: string;
+  };
 }
 
 export interface UserSportProfile {

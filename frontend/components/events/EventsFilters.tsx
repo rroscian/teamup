@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useEvents } from '@/frontend/contexts/EventsContext';
+import { useAuth } from '@/frontend/hooks/useAuth';
 import { Sport, SkillLevel } from '@/shared/types';
 import { XMarkIcon, FunnelIcon } from '@heroicons/react/24/outline';
 import { useGeolocation, calculateDistance } from '@/frontend/hooks/useGeolocation';
@@ -9,12 +10,17 @@ import { useToast } from '@/frontend/contexts/ToastContext';
 
 export function EventsFilters() {
   const { filters, setFilters, clearFilters, events } = useEvents();
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [nearbyFilter, setNearbyFilter] = useState(false);
+  const [shouldWatchGeolocation, setShouldWatchGeolocation] = useState(false);
 
   // Géolocalisation
-  const { position, error: geoError, loading: geoLoading, requestPermission } = useGeolocation(false);
+  const { position, error: geoError, loading: geoLoading, requestPermission } = useGeolocation(shouldWatchGeolocation);
   const { showWarning } = useToast();
+  
+  // Vérifier si la géolocalisation est activée dans le profil utilisateur
+  const isGeolocationEnabledInProfile = user?.profile?.enableGeolocation || false;
 
   // Extraire les valeurs uniques pour les filtres
   const uniqueLocations = Array.from(new Set(events.map(e => e.location.city))).filter(Boolean);
@@ -48,34 +54,78 @@ export function EventsFilters() {
     });
   };
 
-  const handleNearbyFilterChange = async (checked: boolean) => {
+  const handleNearbyFilterChange = (checked: boolean) => {
+    // Vérifier si la géolocalisation est activée dans le profil AVANT de procéder
+    if (checked && !isGeolocationEnabledInProfile) {
+      showWarning('Veuillez d\'abord activer la géolocalisation dans votre profil pour utiliser cette fonctionnalité.');
+      return;
+    }
+    
     setNearbyFilter(checked);
     
     if (checked) {
-      if (!position) {
-        // Demander la permission de géolocalisation
-        const permissionGranted = await requestPermission();
-        if (!permissionGranted || geoError) {
-          showWarning('Cette fonctionnalité n\'est disponible qu\'avec la géolocalisation activée.');
-          setNearbyFilter(false);
-          return;
-        }
-        // Si on n'a toujours pas la position, on ne peut pas filtrer
-        if (!position) {
-          showWarning('Impossible d\'obtenir votre position. Veuillez réessayer.');
-          setNearbyFilter(false);
-          return;
-        }
+      console.log('🌍 Début test géolocalisation...');
+      
+      if (!navigator.geolocation) {
+        console.log('❌ Navigator.geolocation non disponible');
+        showWarning('Géolocalisation non supportée');
+        setNearbyFilter(false);
+        return;
       }
       
-      // Appliquer le filtre géographique
-      setFilters({ 
-        latitude: position.lat, 
-        longitude: position.lng, 
-        radius: 10 
-      });
+      console.log('📍 Appel getCurrentPosition...');
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          console.log('✅ Position reçue:', {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            accuracy: pos.coords.accuracy
+          });
+          
+          console.log('🎯 Application des filtres...');
+          setFilters({ 
+            latitude: pos.coords.latitude, 
+            longitude: pos.coords.longitude, 
+            radius: 10 
+          });
+          
+          console.log('✅ Filtres appliqués avec succès');
+        },
+        (error) => {
+          console.error('❌ Erreur géolocalisation:', {
+            code: error.code,
+            message: error.message,
+            PERMISSION_DENIED: error.code === 1,
+            POSITION_UNAVAILABLE: error.code === 2,
+            TIMEOUT: error.code === 3
+          });
+          
+          let message = '';
+          switch(error.code) {
+            case 1:
+              message = 'Permission refusée. Autorisez la géolocalisation dans votre navigateur.';
+              break;
+            case 2:
+              message = 'Position indisponible. Vérifiez votre connexion GPS/WiFi.';
+              break;
+            case 3:
+              message = 'Délai dépassé. Réessayez.';
+              break;
+            default:
+              message = `Erreur inconnue (${error.code}): ${error.message}`;
+          }
+          
+          showWarning(message);
+          setNearbyFilter(false);
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 15000,
+          maximumAge: 60000
+        }
+      );
     } else {
-      // Retirer le filtre géographique
+      console.log('🚫 Suppression des filtres géographiques');
       setFilters({ 
         latitude: undefined, 
         longitude: undefined, 
@@ -224,21 +274,35 @@ export function EventsFilters() {
                 id="nearbyFilter"
                 checked={nearbyFilter}
                 onChange={(e) => handleNearbyFilterChange(e.target.checked)}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                disabled={geoLoading}
+                className={`w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 ${
+                  !isGeolocationEnabledInProfile || geoLoading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={!isGeolocationEnabledInProfile || geoLoading}
+                title={!isGeolocationEnabledInProfile ? 'Activez la géolocalisation dans votre profil pour utiliser cette fonctionnalité' : ''}
               />
-              <label htmlFor="nearbyFilter" className="text-sm text-gray-800 cursor-pointer">
+              <label 
+                htmlFor="nearbyFilter" 
+                className={`text-sm ${
+                  !isGeolocationEnabledInProfile ? 'text-gray-500 cursor-not-allowed' : 'text-gray-800 cursor-pointer'
+                }`}
+              >
                 Autour de moi (10 km)
               </label>
               {geoLoading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
               )}
             </div>
-            {nearbyFilter && !position && (
-              <div className="mt-2 text-xs text-gray-500">
-                Géolocalisation requise pour cette fonctionnalité
+            {!isGeolocationEnabledInProfile && (
+              <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                ⚠️ Activez la géolocalisation dans votre <a href="/profile" className="underline hover:text-amber-700">profil</a> pour utiliser cette fonctionnalité
               </div>
             )}
+            {nearbyFilter && !position && isGeolocationEnabledInProfile && (
+              <div className="mt-2 text-xs text-gray-500">
+                Géolocalisation en cours...
+              </div>
+            )}
+            
           </div>
 
 

@@ -58,9 +58,11 @@ export default function EventDetailsPage() {
 
     try {
       setRegistering(true);
-      await eventService.joinEvent(event.id);
-      // Recharger l'événement pour mettre à jour la liste des participants
-      await loadEvent();
+      // joinEvent retourne déjà l'événement mis à jour avec les participants
+      const updatedEvent = await eventService.joinEvent(event.id);
+      if (updatedEvent) {
+        setEvent(updatedEvent);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'inscription');
     } finally {
@@ -74,8 +76,11 @@ export default function EventDetailsPage() {
     try {
       setRegistering(true);
       setError(null);
-      await eventService.leaveEvent(event.id);
-      await loadEvent();
+      // leaveEvent retourne déjà l'événement mis à jour avec les participants
+      const updatedEvent = await eventService.leaveEvent(event.id);
+      if (updatedEvent) {
+        setEvent(updatedEvent);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la désinscription de l&apos;événement');
     } finally {

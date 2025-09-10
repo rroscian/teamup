@@ -4,11 +4,8 @@
 import { prisma } from '../lib/prisma';
 
 export async function seedData() {
-  console.log('🌱 Initialisation des données d\'exemple...');
-
   try {
     // Nettoyer les données existantes
-    console.log('🧹 Nettoyage des données existantes...');
     await prisma.message.deleteMany();
     await prisma.conversationParticipant.deleteMany();
     await prisma.conversation.deleteMany();
@@ -18,7 +15,6 @@ export async function seedData() {
     await prisma.user.deleteMany();
 
     // Créer des utilisateurs d'exemple
-    console.log('👥 Création des utilisateurs...');
     const users = await Promise.all([
       prisma.user.create({
         data: {
@@ -71,7 +67,6 @@ export async function seedData() {
     ]);
 
     // Créer des événements d'exemple
-    console.log('📅 Création des événements...');
     const events = await Promise.all([
       prisma.event.create({
         data: {
@@ -106,7 +101,6 @@ export async function seedData() {
     ]);
 
     // Ajouter des participations
-    console.log('🤝 Ajout de participations...');
     await Promise.all([
       // Event 1 participations
       prisma.eventParticipation.create({
@@ -132,12 +126,6 @@ export async function seedData() {
         }
       })
     ]);
-
-    console.log('✅ Données d\'exemple créées avec succès !');
-    console.log('📊 Résumé :');
-    console.log(`   • ${users.length} utilisateurs créés`);
-    console.log(`   • ${events.length} événements créés`);
-    console.log(`   • Participations ajoutées`);
     
   } catch (error) {
     console.error('❌ Erreur lors de l\'initialisation des données :', error);

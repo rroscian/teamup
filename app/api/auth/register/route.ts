@@ -6,12 +6,10 @@ import { registerSchema, validateData } from '@/backend/middleware/validation';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('Registration request body:', JSON.stringify(body, null, 2));
     
     // Validate input data
     const validation = validateData(registerSchema, body);
     if (validation.error) {
-      console.error('Validation error:', validation.error);
       return NextResponse.json(
         { 
           success: false,
@@ -24,11 +22,9 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    console.log('Validation passed, creating user...');
     
     // Create user (cast validated data to UserRegistration type)
     const user = await UserService.register(validation.data as UserRegistration);
-    console.log('User created successfully:', { id: user.id, email: user.email });
     
     return NextResponse.json({
       success: true,

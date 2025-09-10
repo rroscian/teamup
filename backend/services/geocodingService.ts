@@ -4,7 +4,7 @@ export class GeocodingService {
   private static readonly USER_AGENT = 'TeamUp/1.0';
 
   /**
-   * Géocode une adresse en coordonnées GPS
+   * Géocode une adresse en coordonnées GPS avec stratégie de fallback
    */
   static async geocodeAddress(
     address: string,
@@ -13,19 +13,71 @@ export class GeocodingService {
     country: string = 'France'
   ): Promise<{ lat: number; lng: number } | null> {
     try {
-      // Construire la requête de recherche
-      const searchQuery = [
+      console.log(`🌍 Géocodage: "${address}", "${city}", "${postalCode}", "${country}"`);
+      
+      // Stratégie 1: Requête complète avec adresse
+      let coords = await this.tryGeocode([
         address,
         postalCode,
         city,
         country
-      ].filter(Boolean).join(', ');
+      ].filter(Boolean).join(', '));
 
+      if (coords) {
+        console.log(`✅ Géocodage réussi (adresse complète): ${coords.lat}, ${coords.lng}`);
+        return coords;
+      }
+
+      // Stratégie 2: Ville + code postal + pays seulement
+      if (postalCode) {
+        coords = await this.tryGeocode([
+          postalCode,
+          city,
+          country
+        ].filter(Boolean).join(', '));
+
+        if (coords) {
+          console.log(`✅ Géocodage réussi (ville + code postal): ${coords.lat}, ${coords.lng}`);
+          return coords;
+        }
+      }
+
+      // Stratégie 3: Ville + pays seulement
+      coords = await this.tryGeocode([
+        city,
+        country
+      ].filter(Boolean).join(', '));
+
+      if (coords) {
+        console.log(`✅ Géocodage réussi (ville seulement): ${coords.lat}, ${coords.lng}`);
+        return coords;
+      }
+
+      console.log(`❌ Géocodage échoué pour: ${city}`);
+      return null;
+    } catch (error) {
+      console.error('Erreur géocodage:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Essayer une requête de géocodage unique
+   */
+  private static async tryGeocode(searchQuery: string): Promise<{ lat: number; lng: number } | null> {
+    try {
       const url = new URL(this.NOMINATIM_API_URL);
       url.searchParams.append('q', searchQuery);
       url.searchParams.append('format', 'json');
-      url.searchParams.append('limit', '1');
-      url.searchParams.append('countrycodes', 'fr'); // Limiter à la France par défaut
+      url.searchParams.append('limit', '3'); // Augmenté pour avoir plus d'options
+      url.searchParams.append('addressdetails', '1');
+      
+      // Permettre plus de pays, pas seulement la France
+      if (searchQuery.toLowerCase().includes('france')) {
+        url.searchParams.append('countrycodes', 'fr');
+      }
+
+      console.log(`🔍 Requête géocodage: ${searchQuery}`);
 
       const response = await fetch(url.toString(), {
         headers: {
@@ -35,23 +87,32 @@ export class GeocodingService {
       });
 
       if (!response.ok) {
-        console.error('Geocoding API error:', response.statusText);
+        console.error(`❌ API géocodage erreur ${response.status}: ${response.statusText}`);
         return null;
       }
 
       const data = await response.json();
       
       if (data && data.length > 0) {
-        const result = data[0];
-        return {
+        // Prendre le meilleur résultat (importance la plus élevée)
+        const result = data.reduce((best: any, current: any) => {
+          const bestImportance = parseFloat(best.importance || '0');
+          const currentImportance = parseFloat(current.importance || '0');
+          return currentImportance > bestImportance ? current : best;
+        });
+        
+        const coords = {
           lat: parseFloat(result.lat),
           lng: parseFloat(result.lon)
         };
+        
+        console.log(`📍 Coordonnées trouvées: ${coords.lat}, ${coords.lng} (${result.display_name})`);
+        return coords;
       }
 
       return null;
     } catch (error) {
-      console.error('Geocoding error:', error);
+      console.error('Erreur lors de la requête géocodage:', error);
       return null;
     }
   }

@@ -103,6 +103,38 @@ export class UserService {
       return null;
     }
 
+    // Préparer les données de base du profil
+    const baseProfileData: any = {};
+    
+    if (profileData.bio !== undefined) baseProfileData.bio = profileData.bio;
+    if (profileData.location !== undefined) baseProfileData.location = profileData.location as any;
+    if (profileData.favoriteSports !== undefined) baseProfileData.sports = profileData.favoriteSports;
+    if (profileData.skillLevels !== undefined) baseProfileData.skillLevel = profileData.skillLevels?.[0]?.level;
+    if (profileData.availability !== undefined) {
+      baseProfileData.availability = profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || [];
+    }
+    
+    // Gestion spécifique de la géolocalisation avec tracking
+    if (profileData.enableGeolocation !== undefined) {
+      baseProfileData.enableGeolocation = profileData.enableGeolocation;
+      
+      // Logging pour le tracking des préférences de géolocalisation
+      console.log(`📍 Geolocation preference updated for user ${id}: ${profileData.enableGeolocation ? 'ENABLED' : 'DISABLED'} at ${new Date().toISOString()}`);
+      
+      // Si on désactive la géolocalisation, vider la position
+      if (!profileData.enableGeolocation) {
+        baseProfileData.lastKnownPosition = null;
+        console.log(`🗑️ Cleared last known position for user ${id}`);
+      }
+    }
+    
+    if (profileData.lastKnownPosition !== undefined) {
+      baseProfileData.lastKnownPosition = profileData.lastKnownPosition as any;
+      if (profileData.lastKnownPosition) {
+        console.log(`🌍 Position updated for user ${id}: lat=${profileData.lastKnownPosition.lat}, lng=${profileData.lastKnownPosition.lng} at ${profileData.lastKnownPosition.timestamp}`);
+      }
+    }
+
     // Update or create profile
     return prisma.user.update({
       where: { id },
@@ -114,15 +146,11 @@ export class UserService {
               location: profileData.location as any,
               sports: profileData.favoriteSports || [],
               skillLevel: profileData.skillLevels?.[0]?.level,
-              availability: profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || []
+              availability: profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || [],
+              enableGeolocation: profileData.enableGeolocation || false,
+              lastKnownPosition: profileData.lastKnownPosition as any
             },
-            update: {
-              bio: profileData.bio,
-              location: profileData.location as any,
-              sports: profileData.favoriteSports || [],
-              skillLevel: profileData.skillLevels?.[0]?.level,
-              availability: profileData.availability?.preferredTimes?.map(ts => `${ts.startTime}-${ts.endTime}`) || []
-            }
+            update: baseProfileData
           }
         }
       },
