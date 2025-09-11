@@ -8,6 +8,7 @@ import {
   Cog6ToothIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
+import Footer from '@/frontend/components/Footer';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -89,6 +90,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, setActiv
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   );
 };

@@ -5,7 +5,6 @@ import { eventServiceServer } from '@/backend/services/eventService.server';
 export async function POST(request: NextRequest) {
   return withAuth(request, async () => {
     try {
-      console.log('🧪 Démarrage du test de géocodage...');
       
       const results = await eventServiceServer.testGeocodingWithFrenchCities();
       

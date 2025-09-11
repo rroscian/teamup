@@ -17,8 +17,6 @@ export async function POST(request: NextRequest) {
         );
       }
       
-      console.log(`🔄 Démarrage du re-géocodage pour: ${city}`);
-      
       const results = await eventServiceServer.forceRegeocodingByCity(city);
       
       return NextResponse.json({

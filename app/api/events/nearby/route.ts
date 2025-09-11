@@ -76,8 +76,6 @@ export async function GET(request: NextRequest) {
         currentParticipants: event.participants.filter(p => p.status === 'attending').length
       }));
 
-      console.log(`📍 API: Retour de ${transformedEvents.length} événements proches`);
-
       return NextResponse.json({
         success: true,
         data: transformedEvents,

@@ -17,6 +17,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/frontend/components/events/ui/LoadingSpinner';
 import { ErrorMessage } from '@/frontend/components/events/ui/ErrorMessage';
+import Footer from '@/frontend/components/Footer';
 
 export default function EventDetailsPage() {
   const params = useParams();
@@ -488,6 +489,7 @@ export default function EventDetailsPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

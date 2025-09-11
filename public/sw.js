@@ -13,15 +13,12 @@ const STATIC_CACHE_URLS = [
 
 // Installation du Service Worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Install');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Service Worker: Caching App Shell');
         return cache.addAll(STATIC_CACHE_URLS);
       })
       .then(() => {
-        console.log('Service Worker: Skip Waiting');
         return self.skipWaiting();
       })
   );
@@ -29,13 +26,11 @@ self.addEventListener('install', (event) => {
 
 // Activation du Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activate');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Clearing Old Cache');
             return caches.delete(cache);
           }
         })
@@ -51,8 +46,6 @@ self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) {
     return;
   }
-  
-  console.log('Service Worker: Fetching', event.request.url);
   
   // Cache first pour les assets statiques
   if (event.request.url.includes('.png') || 

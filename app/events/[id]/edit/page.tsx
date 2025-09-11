@@ -23,6 +23,7 @@ interface CreateEventForm {
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { LoadingSpinner } from '@/frontend/components/events/ui/LoadingSpinner';
 import { ErrorMessage } from '@/frontend/components/events/ui/ErrorMessage';
+import Footer from '@/frontend/components/Footer';
 
 const sportsOptions: { value: Sport; label: string }[] = [
   { value: Sport.Football, label: 'Football' },
@@ -458,6 +459,7 @@ export default function EditEventPage() {
           </form>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

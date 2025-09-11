@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { EventsProvider } from '@/frontend/contexts/EventsContext';
 import { EventWizard } from '@/frontend/components/events/EventWizard';
+import Footer from '@/frontend/components/Footer';
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export default function CreateEventPage() {
           <EventWizard onComplete={handleComplete} />
         </div>
       </div>
+      <Footer />
     </EventsProvider>
   );
 }

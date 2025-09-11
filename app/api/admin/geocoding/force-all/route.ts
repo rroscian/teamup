@@ -5,7 +5,6 @@ import { eventServiceServer } from '@/backend/services/eventService.server';
 export async function POST(request: NextRequest) {
   return withAuth(request, async () => {
     try {
-      console.log('🚀 Démarrage du géocodage forcé de tous les événements...');
       
       // Récupérer tous les événements
       const allEvents = await eventServiceServer.getEvents({});
@@ -16,7 +15,6 @@ export async function POST(request: NextRequest) {
         event.location.city
       );
       
-      console.log(`📋 ${eventsToGeocode.length} événements trouvés sans coordonnées sur ${allEvents.length} total`);
       
       if (eventsToGeocode.length === 0) {
         return NextResponse.json({
@@ -46,7 +44,6 @@ export async function POST(request: NextRequest) {
       
       for (let i = 0; i < eventsToGeocode.length; i += batchSize) {
         const batch = eventsToGeocode.slice(i, i + batchSize);
-        console.log(`🔄 Traitement batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(eventsToGeocode.length/batchSize)}`);
         
         const batchPromises = batch.map(async (event) => {
           try {
@@ -74,7 +71,6 @@ export async function POST(request: NextRequest) {
                 }
               });
               
-              console.log(`✅ Géocodé: ${event.title} (${event.location.city}) -> ${coords.lat}, ${coords.lng}`);
               return {
                 success: true,
                 event: event.title,
@@ -82,7 +78,6 @@ export async function POST(request: NextRequest) {
                 coords: coords
               };
             } else {
-              console.log(`❌ Échec géocodage: ${event.title} (${event.location.city})`);
               return {
                 success: false,
                 event: event.title,
@@ -91,7 +86,6 @@ export async function POST(request: NextRequest) {
               };
             }
           } catch (error) {
-            console.error(`❌ Erreur géocodage ${event.title}:`, error);
             return {
               success: false,
               event: event.title,
@@ -121,7 +115,6 @@ export async function POST(request: NextRequest) {
       
       const successRate = Math.round((totalSuccess / eventsToGeocode.length) * 100);
       
-      console.log(`🏁 Géocodage forcé terminé: ${totalSuccess}/${eventsToGeocode.length} succès (${successRate}%)`);
       
       return NextResponse.json({
         success: true,

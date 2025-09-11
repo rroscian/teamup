@@ -181,7 +181,6 @@ export function EventsProvider({ children }: { children: ReactNode }) {
 
   const loadEventsWithFilters = async (filters: EventFilters) => {
     try {
-      console.log('📡 EventsContext: loadEventsWithFilters avec filtres:', filters);
       setLoading(true);
       setError(null);
       

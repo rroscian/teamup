@@ -8,6 +8,7 @@ import Image from 'next/image';
 import SportPreferences from '@/frontend/components/profile/SportPreferences';
 import GeolocationSettings from '@/frontend/components/profile/GeolocationSettings';
 import { useToast } from '@/frontend/contexts/ToastContext';
+import Footer from '@/frontend/components/Footer';
 
 export default function ProfilePage() {
   const { user, updateUserInfo, logout, refreshUser, loading } = useAuth();
@@ -674,6 +675,7 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useNearbyEvents, NearbyEventFilters } from '@/frontend/hooks/useNearbyE
 import { NearbyEventsFilters } from '@/frontend/components/events/NearbyEventsFilters';
 import { NearbyEventCard } from '@/frontend/components/events/NearbyEventCard';
 import { useApi } from '@/frontend/hooks/useApi';
+import Footer from '@/frontend/components/Footer';
 
 export default function NearbyEventsPage() {
   const router = useRouter();
@@ -254,6 +255,7 @@ export default function NearbyEventsPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   );
 }

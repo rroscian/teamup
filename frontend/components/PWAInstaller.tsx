@@ -12,7 +12,6 @@ export function PWAInstaller() {
       navigator.serviceWorker
         .register('/sw.js')
         .then((registration) => {
-          console.log('SW registered: ', registration);
           
           // Vérifier les mises à jour
           registration.addEventListener('updatefound', () => {
@@ -31,7 +30,7 @@ export function PWAInstaller() {
           });
         })
         .catch((registrationError) => {
-          console.log('SW registration failed: ', registrationError);
+          console.error('SW registration failed: ', registrationError);
         });
     }
 

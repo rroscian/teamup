@@ -208,18 +208,9 @@ export const eventServiceServer = {
       // Filtrage géographique
       if (filters?.latitude !== undefined && filters?.longitude !== undefined) {
         const radius = filters.radius || 10; // 10 km par défaut
-        console.log('🌍 Backend: Filtrage géographique activé', {
-          userLat: filters.latitude,
-          userLng: filters.longitude,
-          radius,
-          totalEvents: events.length
-        });
         
         const eventsWithGeo = events.filter(event => {
           const hasGeo = event.location.latitude && event.location.longitude;
-          if (!hasGeo) {
-            console.log('❌ Backend: Événement sans géo:', event.title);
-          }
           return hasGeo;
         });
         
@@ -232,7 +223,6 @@ export const eventServiceServer = {
           );
           
           const isNearby = distance <= radius;
-          console.log(`📏 Backend: ${event.title} - Distance: ${distance.toFixed(2)}km, Nearby: ${isNearby}`);
           
           return isNearby;
         });
@@ -466,11 +456,9 @@ export const eventServiceServer = {
   // Forcer le re-géocodage de tous les événements d'une ville donnée
   async forceRegeocodingByCity(cityName: string): Promise<{ success: number; failed: number; details: string[] }> {
     try {
-      console.log(`🔄 Re-géocodage forcé pour la ville: ${cityName}`);
       
       // Rechercher les événements de cette ville
       const events = await this.getEvents({ city: cityName });
-      console.log(`📋 ${events.length} événements trouvés pour ${cityName}`);
       
       let successCount = 0;
       let failedCount = 0;
@@ -511,7 +499,6 @@ export const eventServiceServer = {
         }
       }
       
-      console.log(`🏁 Re-géocodage terminé: ${successCount} succès, ${failedCount} échecs`);
       return { success: successCount, failed: failedCount, details };
     } catch (error) {
       console.error('Erreur lors du re-géocodage:', error);
@@ -530,7 +517,6 @@ export const eventServiceServer = {
       'Bourg-en-Bresse', 'Châteauroux', 'Laval', 'Vannes', 'Auxerre', 'Nevers', 'Mâcon', 'Alès', 'Montauban', 'Agen'
     ];
     
-    console.log(`🧪 Test de géocodage sur ${testCities.length} villes françaises...`);
     const results: { [city: string]: { success: boolean; coords?: { lat: number; lng: number }; error?: string } } = {};
     
     for (const city of testCities) {
@@ -559,11 +545,6 @@ export const eventServiceServer = {
         console.error(`❌ ${city}: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
       }
     }
-    
-    const successCount = Object.values(results).filter(r => r.success).length;
-    const failureCount = Object.values(results).filter(r => !r.success).length;
-    
-    console.log(`🏁 Test terminé: ${successCount}/${testCities.length} succès (${Math.round(successCount/testCities.length*100)}%)`);
     
     return results;
   },

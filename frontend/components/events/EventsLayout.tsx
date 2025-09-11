@@ -15,6 +15,7 @@ import { useAuth } from '@/frontend/hooks/useAuth';
 import { useGeolocation } from '@/frontend/hooks/useGeolocation';
 import { EventCardWithDistance } from './EventCardWithDistance';
 import { PlusIcon, MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import Footer from '@/frontend/components/Footer';
 
 export function EventsLayout() {
   const { loading, error, viewOptions, filteredEvents, filters, setFilters, events, suggestedEvents, nearbyEvents, loadNearbyEvents, userPosition } = useEvents();
@@ -283,6 +284,7 @@ export function EventsLayout() {
           </main>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

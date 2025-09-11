@@ -49,18 +49,12 @@ export async function GET(request: NextRequest) {
     const latitude = searchParams.get('latitude');
     const longitude = searchParams.get('longitude');
     const radius = searchParams.get('radius');
-    console.log('🌍 API Events: Paramètres géo reçus:', { latitude, longitude, radius });
     if (latitude && longitude) {
       filters.latitude = parseFloat(latitude);
       filters.longitude = parseFloat(longitude);
       if (radius) {
         filters.radius = parseFloat(radius);
       }
-      console.log('✅ API Events: Filtres géo parsés:', { 
-        latitude: filters.latitude, 
-        longitude: filters.longitude, 
-        radius: filters.radius 
-      });
     }
     
     // Special endpoints
@@ -78,12 +72,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(events);
     }
     
-    // Get events with filters
-    console.log('📋 API Events: Filtres finaux envoyés au service:', filters);
-    
     // Si coordonnées géographiques fournies, utiliser findNearbyEvents
     if (filters.latitude && filters.longitude) {
-      console.log('🎯 API Events: Utilisation de findNearbyEvents avec géolocalisation');
       const nearbyEvents = await eventServiceServer.findNearbyEvents(
         filters.latitude,
         filters.longitude,

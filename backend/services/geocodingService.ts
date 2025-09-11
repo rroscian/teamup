@@ -12,9 +12,7 @@ export class GeocodingService {
     postalCode?: string,
     country: string = 'France'
   ): Promise<{ lat: number; lng: number } | null> {
-    try {
-      console.log(`🌍 Géocodage: "${address}", "${city}", "${postalCode}", "${country}"`);
-      
+    try {      
       // Stratégie 1: Requête complète avec adresse
       let coords = await this.tryGeocode([
         address,
@@ -24,7 +22,6 @@ export class GeocodingService {
       ].filter(Boolean).join(', '));
 
       if (coords) {
-        console.log(`✅ Géocodage réussi (adresse complète): ${coords.lat}, ${coords.lng}`);
         return coords;
       }
 
@@ -37,7 +34,6 @@ export class GeocodingService {
         ].filter(Boolean).join(', '));
 
         if (coords) {
-          console.log(`✅ Géocodage réussi (ville + code postal): ${coords.lat}, ${coords.lng}`);
           return coords;
         }
       }
@@ -49,11 +45,9 @@ export class GeocodingService {
       ].filter(Boolean).join(', '));
 
       if (coords) {
-        console.log(`✅ Géocodage réussi (ville seulement): ${coords.lat}, ${coords.lng}`);
         return coords;
       }
 
-      console.log(`❌ Géocodage échoué pour: ${city}`);
       return null;
     } catch (error) {
       console.error('Erreur géocodage:', error);
@@ -76,8 +70,6 @@ export class GeocodingService {
       if (searchQuery.toLowerCase().includes('france')) {
         url.searchParams.append('countrycodes', 'fr');
       }
-
-      console.log(`🔍 Requête géocodage: ${searchQuery}`);
 
       const response = await fetch(url.toString(), {
         headers: {
@@ -106,7 +98,6 @@ export class GeocodingService {
           lng: parseFloat(result.lon)
         };
         
-        console.log(`📍 Coordonnées trouvées: ${coords.lat}, ${coords.lng} (${result.display_name})`);
         return coords;
       }
 
