@@ -76,30 +76,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-[#00A8CC] mb-2">10K+</div>
-              <div className="text-[#2C3E50]/70">Sportifs actifs</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#00A8CC] mb-2">500+</div>
-              <div className="text-[#2C3E50]/70">Événements par mois</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#00A8CC] mb-2">50+</div>
-              <div className="text-[#2C3E50]/70">Terrains partenaires</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-[#00A8CC] mb-2">15+</div>
-              <div className="text-[#2C3E50]/70">Sports disponibles</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Values Section */}
       <section id="values" className="py-20 px-6">
         <div className="container mx-auto max-w-6xl">

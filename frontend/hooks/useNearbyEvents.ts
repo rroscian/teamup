@@ -59,7 +59,6 @@ export const useNearbyEvents = (): UseNearbyEventsResult => {
             lng: position.coords.longitude
           };
           
-          console.log('🌍 Position obtenue:', coords);
           setUserPosition(coords);
           setHasLocationPermission(true);
           setLoading(false);
@@ -117,8 +116,6 @@ export const useNearbyEvents = (): UseNearbyEventsResult => {
       if (filters.level) params.append('level', filters.level);
       if (filters.city) params.append('city', filters.city);
 
-      console.log('🔍 Recherche événements proches avec params:', Object.fromEntries(params));
-
       const response = await execute(`/api/events/nearby?${params.toString()}`, {
         method: 'GET'
       });
@@ -127,7 +124,6 @@ export const useNearbyEvents = (): UseNearbyEventsResult => {
 
         setEvents(response.data || []);
         setMetadata(response.metadata);
-        console.log(`✅ ${(response.data || []).length} événements trouvés dans un rayon de ${filters.radius || 10}km`);
       } else {
         throw new Error('Aucune réponse reçue du serveur');
       }
