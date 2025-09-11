@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/frontend/hooks/useAuth';
-import { User, Edit3, Save, X, Camera, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Edit3, Save, X, Camera, Lock, Eye, EyeOff, Trash2, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import SportPreferences from '@/frontend/components/profile/SportPreferences';
@@ -39,6 +39,9 @@ export default function ProfilePage() {
   const [isEditingSports, setIsEditingSports] = useState(false);
   const [isSavingSports, setIsSavingSports] = useState(false);
   const [isSavingGeolocation, setIsSavingGeolocation] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Remove automatic redirect - let the user stay on profile page
   // Only redirect if explicitly not authenticated on initial load
@@ -334,6 +337,48 @@ export default function ProfilePage() {
       throw error;
     } finally {
       setIsSavingGeolocation(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user?.id) {
+      showError('Erreur: utilisateur non identifié');
+      return;
+    }
+
+    if (deleteConfirmText !== 'SUPPRIMER') {
+      showError('Veuillez taper "SUPPRIMER" pour confirmer');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        showSuccess('Compte supprimé avec succès');
+        // Déconnexion automatique et redirection
+        logout();
+        router.push('/');
+      } else {
+        showError(result.error || 'Erreur lors de la suppression du compte');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression du compte:', error);
+      showError('Erreur lors de la suppression du compte');
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText('');
     }
   };
 
@@ -664,15 +709,112 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          {/* Danger Zone */}
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-8 mt-4 sm:mt-6 border-2 border-red-200">
+            <div className="flex items-center space-x-2 mb-6 sm:mb-6">
+              <AlertTriangle className="w-6 h-6 sm:w-5 sm:h-5 text-red-600" />
+              <h2 className="text-lg sm:text-xl font-semibold text-red-600">Zone de danger</h2>
+            </div>
+            
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+              <h3 className="text-base font-medium text-red-800 mb-2">Suppression définitive du compte</h3>
+              <p className="text-sm text-red-700">
+                Cette action est <strong>irréversible</strong>. Toutes vos données, événements créés, 
+                participations et messages seront définitivement supprimés.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full sm:w-auto px-6 py-4 sm:py-3 bg-red-600 text-white rounded-xl sm:rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-lg font-medium text-base sm:text-sm flex items-center justify-center space-x-2"
+            >
+              <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
+              <span>Supprimer mon compte</span>
+            </button>
+          </div>
+
           {/* Actions */}
           <div className="mt-6 sm:mt-8 text-center">
             <button
               onClick={handleLogout}
-              className="px-8 py-4 sm:px-6 sm:py-3 bg-red-600 text-white rounded-xl sm:rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-lg font-medium text-base sm:text-sm"
+              className="px-8 py-4 sm:px-6 sm:py-3 bg-gray-600 text-white rounded-xl sm:rounded-lg hover:bg-gray-700 transition-colors duration-200 shadow-lg font-medium text-base sm:text-sm"
             >
               Se déconnecter
             </button>
           </div>
+
+          {/* Modal de confirmation de suppression */}
+          {showDeleteConfirm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Confirmer la suppression</h3>
+                    <p className="text-sm text-gray-600">Cette action est irréversible</p>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <p className="text-sm text-gray-700 mb-4">
+                    Êtes-vous absolument sûr de vouloir supprimer votre compte ? 
+                    Cette action supprimera définitivement :
+                  </p>
+                  <ul className="text-sm text-gray-600 space-y-1 mb-4 list-disc list-inside">
+                    <li>Votre profil et toutes vos informations personnelles</li>
+                    <li>Tous les événements que vous avez créés</li>
+                    <li>Vos participations aux événements</li>
+                    <li>Votre historique de messages</li>
+                  </ul>
+                  <p className="text-sm font-medium text-red-600">
+                    Pour confirmer, tapez <strong>"SUPPRIMER"</strong> dans le champ ci-dessous :
+                  </p>
+                </div>
+
+                <div className="mb-6">
+                  <input
+                    type="text"
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                    placeholder="Tapez SUPPRIMER"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-center font-medium"
+                  />
+                </div>
+
+                <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                  <button
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount || deleteConfirmText !== 'SUPPRIMER'}
+                    className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center space-x-2"
+                  >
+                    {isDeletingAccount ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Suppression...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4" />
+                        <span>Supprimer définitivement</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteConfirmText('');
+                    }}
+                    disabled={isDeletingAccount}
+                    className="flex-1 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 font-medium"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <Footer />

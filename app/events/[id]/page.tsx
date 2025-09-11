@@ -446,44 +446,6 @@ export default function EventDetailsPage() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Participants ({event.participants.length})
                 </h2>
-                <div className="space-y-3">
-                  {event.participants.slice(0, 5).map((participant) => {
-                    if (!participant.user) return null;
-                    
-                    return (
-                      <div key={participant.id} className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
-                          {participant.user.avatar ? (
-                            <Image
-                              src={participant.user.avatar}
-                              alt={participant.user.name || 'Utilisateur'}
-                              width={32}
-                              height={32}
-                              className="rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-sm font-medium text-gray-600">
-                              {participant.user.name ? participant.user.name.charAt(0).toUpperCase() : '?'}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {participant.user.name || 'Utilisateur'}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            @{participant.user.username || 'utilisateur'}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {event.participants.length > 5 && (
-                    <p className="text-sm text-gray-500 text-center pt-2">
-                      Et {event.participants.length - 5} autre{event.participants.length - 5 > 1 ? 's' : ''} participant{event.participants.length - 5 > 1 ? 's' : ''}...
-                    </p>
-                  )}
-                </div>
               </div>
             )}
           </div>

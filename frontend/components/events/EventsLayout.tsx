@@ -88,21 +88,23 @@ export function EventsLayout() {
               Découvrez et participez aux événements près de chez vous
             </p>
           </div>
-          <div className={isMobile ? '' : 'mt-4 sm:mt-0'}>
-            <Link
-              href="/events/create"
-              className={`inline-flex items-center justify-center border border-transparent rounded-xl shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${
-                isMobile 
-                  ? 'w-full px-6 py-4 text-base font-semibold' 
-                  : 'px-4 py-2 text-sm font-medium'
-              }`}
-            >
-              <PlusIcon className={`mr-2 ${
-                isMobile ? 'h-6 w-6' : 'h-5 w-5'
-              }`} />
-              {isMobile ? 'Créer mon événement' : 'Créer un événement'}
-            </Link>
-          </div>
+          {user && (
+            <div className={isMobile ? '' : 'mt-4 sm:mt-0'}>
+              <Link
+                href="/events/create"
+                className={`inline-flex items-center justify-center border border-transparent rounded-xl shadow-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ${
+                  isMobile 
+                    ? 'w-full px-6 py-4 text-base font-semibold' 
+                    : 'px-4 py-2 text-sm font-medium'
+                }`}
+              >
+                <PlusIcon className={`mr-2 ${
+                  isMobile ? 'h-6 w-6' : 'h-5 w-5'
+                }`} />
+                {isMobile ? 'Créer mon événement' : 'Créer un événement'}
+              </Link>
+            </div>
+          )}
         </div>
         
         {/* Barre de recherche principale - Optimisée mobile */}

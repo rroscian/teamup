@@ -112,25 +112,6 @@ export function EventsPagination() {
             <span className="font-medium">{endIndex}</span> sur{' '}
             <span className="font-medium">{totalItems}</span> résultat{totalItems > 1 ? 's' : ''}
           </p>
-          
-          {/* Sélecteur d'éléments par page */}
-          {!isMobile && (
-            <div className="flex items-center gap-2">
-              <label htmlFor="items-per-page" className="text-sm text-gray-600">
-                Éléments par page:
-              </label>
-              <select
-                id="items-per-page"
-                value={viewOptions.itemsPerPage}
-                onChange={(e) => changeItemsPerPage(Number(e.target.value))}
-                className="border border-gray-300 rounded-md px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                {getItemsPerPageOptions().map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
 
         {/* Navigation des pages */}
@@ -200,27 +181,6 @@ export function EventsPagination() {
           </button>
         </div>
       </div>
-
-      {/* Sélecteur d'éléments par page sur mobile */}
-      {isMobile && (
-        <div className="mt-4">
-          <div className="flex items-center justify-center gap-2">
-            <label htmlFor="mobile-items-per-page" className="text-sm text-gray-600">
-              Éléments par page:
-            </label>
-            <select
-              id="mobile-items-per-page"
-              value={viewOptions.itemsPerPage}
-              onChange={(e) => changeItemsPerPage(Number(e.target.value))}
-              className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
-            >
-              {getItemsPerPageOptions().map(option => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-      )}
       
       {/* Navigation rapide sur mobile */}
       {isMobile && totalPages > 5 && (
